@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FSK Space & Area Register</title>
+<meta name="description" content="Search, filter and total Fountainhead School infrastructure spaces by floor, block, category and programme.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1e3d'/%3E%3Cpath d='M14 44V18h36v26M10 48h44M22 18v26M42 18v26M22 28h20M22 37h20' fill='none' stroke='%23f5a623' stroke-width='4'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f0f2f5; --card-bg:#fff; --text:#1e293b; --text-muted:#64748b;
+  --border:#e2e8f0; --toolbar-bg:#fff; --input-bg:#f8fafc;
+  --shadow:0 1px 3px rgba(0,0,0,0.08); --shadow-card:0 2px 8px rgba(0,0,0,0.06);
+  --bar-bg:#1a2236; --radius:10px; --accent:#3b82f6; --header-bg:#1a2236;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.space-menu-spacer{height:48px}
+
+/* TOOLBAR */
+.toolbar{background:var(--toolbar-bg);padding:10px 16px 8px;border-bottom:1px solid var(--border);position:sticky;top:48px;z-index:90;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px;}
+.search-wrap{position:relative;}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.85rem;pointer-events:none;}
+#searchInput{width:100%;padding:9px 10px 9px 34px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--input-bg);color:var(--text);outline:none;transition:border-color 0.15s;}
+#searchInput:focus{border-color:var(--accent);}
+.filter-row{display:flex;align-items:center;gap:8px;}
+.filter-select{flex:1;min-width:0;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.82rem;background:var(--input-bg);color:var(--text);outline:none;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.filter-select:focus{border-color:var(--accent);}
+.category-filter{position:relative;min-width:0;}
+.category-filter-button{width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.category-filter-menu{position:fixed;width:min(290px,calc(100vw - 24px));max-height:min(340px,calc(100vh - 24px));overflow:auto;padding:8px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 12px 30px rgba(15,23,42,.18);z-index:200;}
+.category-filter-menu[hidden]{display:none;}
+.category-filter-actions{display:flex;gap:7px;padding-bottom:7px;border-bottom:1px solid var(--border);margin-bottom:5px;}
+.category-filter-actions button{border:0;background:#edf4ff;color:#1e4d8c;border-radius:5px;padding:5px 8px;font-family:inherit;font-size:.7rem;font-weight:600;cursor:pointer;}
+.category-option{display:flex;align-items:center;gap:8px;padding:6px 5px;border-radius:5px;font-size:.75rem;cursor:pointer;}
+.category-option:hover{background:#f1f5f9;}
+.category-option input{accent-color:var(--accent);width:15px;height:15px;}
+.category-option-icon{width:18px;text-align:center;font-size:.9rem;line-height:1;flex:0 0 18px;}
+.cat-badge-icon{margin-right:4px;font-size:.72rem;vertical-align:0;}
+.multi-filter-menu{position:fixed;width:min(290px,calc(100vw - 24px));max-height:min(360px,calc(100vh - 24px));overflow:auto;padding:8px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 12px 30px rgba(15,23,42,.2);z-index:200;}
+.multi-filter-menu[hidden]{display:none;}
+.multi-filter-actions{display:flex;gap:7px;padding-bottom:7px;border-bottom:1px solid var(--border);margin-bottom:5px;}
+.multi-filter-actions button{border:0;background:#edf4ff;color:#1e4d8c;border-radius:5px;padding:5px 8px;font-family:inherit;font-size:.7rem;font-weight:600;cursor:pointer;}
+.multi-filter-option{display:flex;align-items:center;gap:8px;padding:6px 5px;border-radius:5px;font-size:.75rem;cursor:pointer;}
+.multi-filter-option:hover{background:#f1f5f9;}
+.multi-filter-option input{accent-color:var(--accent);width:15px;height:15px;}
+.clear-btn{padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.8rem;font-weight:600;background:var(--input-bg);color:var(--text-muted);cursor:pointer;white-space:nowrap;transition:all 0.15s;}
+.clear-btn:hover{border-color:var(--accent);color:var(--accent);}
+.clear-btn:disabled{opacity:.48;cursor:not-allowed;pointer-events:none;}
+.check-visible-control{display:flex;align-items:center;justify-content:center;gap:7px;}
+.check-visible-control input{width:15px;height:15px;accent-color:#1e4d8c;cursor:pointer;}
+.count-badge{font-size:0.75rem;font-weight:600;color:var(--text-muted);white-space:nowrap;}
+
+/* ── DESKTOP TABLE (>900px) ── */
+.table-wrapper{padding:14px 20px;display:none;}
+.table-scroll{overflow:auto;border-radius:10px;box-shadow:var(--shadow-card);overscroll-behavior:contain;}
+.facility-table{width:100%;border-collapse:separate;border-spacing:0;font-size:0.82rem;background:var(--card-bg,#fff);white-space:nowrap;table-layout:fixed;}
+.facility-table thead tr{background:var(--header-bg);color:#fff;}
+.facility-table thead th{padding:11px 10px;text-align:left;font-weight:600;font-size:0.72rem;letter-spacing:0.04em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,0.08);user-select:none;cursor:pointer;}
+.facility-table thead th:last-child{border-right:none;}
+.facility-table thead th:hover{background:#243047;}
+.th-inner{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden;}
+.th-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sort-arrow{font-size:0.65rem;opacity:0.4;flex-shrink:0;}
+.sort-arrow.asc{opacity:1;color:#60a5fa;}
+.sort-arrow.desc{opacity:1;color:#f472b6;}
+.header-filter-select{width:20px;height:20px;flex:0 0 20px;margin:0;border:1px solid rgba(255,255,255,.38);border-radius:5px;appearance:none;-webkit-appearance:none;color:transparent;background-color:rgba(255,255,255,.1);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath d='M4 5h16l-6.5 7.3V18l-3 1.5v-7.2z' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;cursor:pointer;outline:none;}
+.header-filter-select:hover,.header-filter-select:focus{background-color:rgba(255,255,255,.22);border-color:#fff;}
+.header-filter-select.active{background-color:#f5a623;border-color:#ffd27a;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath d='M4 5h16l-6.5 7.3V18l-3 1.5v-7.2z' fill='none' stroke='%230b1e3d' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E");}
+.header-filter-select option{color:#0f172a;background:#fff;}
+.facility-table tbody tr{border-bottom:1px solid var(--border);transition:background 0.1s;cursor:pointer;}
+.facility-table tbody tr:hover{filter:brightness(0.96);}
+.facility-table tbody tr.selected{outline:2px solid var(--accent);outline-offset:-2px;}
+.facility-table td{padding:9px 10px;vertical-align:middle;border-right:1px solid var(--border);}
+.facility-table td:last-child{border-right:none;}
+.td-sr{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-muted);text-align:center;width:40px;}
+.td-name{font-weight:700;min-width:0;white-space:normal;overflow-wrap:anywhere;}
+.td-floor,.td-block{color:var(--text-muted);font-size:0.78rem;}
+.td-area-exact{font-family:'JetBrains Mono',monospace;font-size:.68rem;line-height:1.25;white-space:normal;overflow-wrap:anywhere;color:#475569;}
+.td-muted{color:var(--text-muted);font-size:0.78rem;text-align:center;}
+.td-num{font-family:'JetBrains Mono',monospace;font-size:0.78rem;text-align:right;color:var(--accent);min-width:0;}
+.td-exact{font-family:'JetBrains Mono',monospace;font-size:.67rem;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.td-dims{font-family:'JetBrains Mono',monospace;font-size:0.70rem;color:#334155;white-space:normal;overflow-wrap:anywhere;text-overflow:clip;line-height:1.3;}
+.td-cb{text-align:center;width:36px;}
+.td-cb input{accent-color:var(--accent);cursor:pointer;width:15px;height:15px;}
+.cat-badge{display:inline-block;font-size:0.63rem;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:0.04em;white-space:nowrap;}
+.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--border);font-size:0.78rem;color:var(--text-muted);padding:9px 10px;}
+.total-row .td-num{color:#059669;font-size:0.82rem;}
+.selected-total-row td{font-weight:800;background:#fff4d6!important;border-top:1px solid #f5c35b;color:#7a4700!important;font-size:.78rem;padding:9px 10px;}
+.selected-total-row .td-num{color:#b35f00!important;font-size:.92rem;}
+
+/* ── MOBILE CARDS (≤900px) ── */
+.cards-container{padding:10px 12px;display:block;}
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow-card);overflow:hidden;margin-bottom:9px;display:flex;cursor:pointer;transition:box-shadow 0.15s;}
+.card:active{box-shadow:0 0 0 2px var(--accent);}
+.card.selected{box-shadow:0 0 0 2px var(--accent);}
+.card-accent-bar{width:4px;flex-shrink:0;}
+.card-body{padding:10px 12px;flex:1;min-width:0;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.card-name{font-size:0.875rem;font-weight:700;flex:1;line-height:1.3;}
+.card-sr{font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--text-muted);background:var(--input-bg);padding:2px 6px;border-radius:4px;flex-shrink:0;}
+.card-badge{display:inline-block;font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:0.04em;margin-bottom:5px;}
+.card-meta{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;}
+.card-areas{display:flex;gap:12px;}
+.area-chip{font-family:'JetBrains Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);}
+.card-dims{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#334155;margin-top:8px;padding:9px 10px;background:#fff8e8;border:1px solid #f7d99a;border-radius:7px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;word-break:normal;}
+.card-checkbox{display:flex;align-items:center;justify-content:center;padding:10px 10px;flex-shrink:0;}
+.card-checkbox input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+
+/* NO RESULTS */
+.no-results{text-align:center;padding:60px 20px;color:var(--text-muted);display:none;}
+.no-results.show{display:block;}
+.no-results-icon{font-size:2.5rem;margin-bottom:12px;}
+
+/* SELECTED-SPACE PIE CHART */
+.pie-dialog{width:min(640px,calc(100vw - 28px));max-height:calc(100vh - 28px);border:0;border-radius:12px;padding:0;box-shadow:0 22px 70px rgba(15,23,42,.32);color:#172033;}
+.pie-dialog::backdrop{background:rgba(11,30,61,.52);backdrop-filter:blur(2px);}
+.pie-dialog-inner{padding:18px;}
+.pie-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.pie-dialog-title{font-size:1rem;font-weight:800;color:#0b1e3d;}
+.pie-dialog-subtitle{margin-top:3px;color:var(--text-muted);font-size:.72rem;}
+.pie-close{width:30px;height:30px;border:0;border-radius:6px;background:#eef2f7;color:#334155;font-size:1.2rem;line-height:1;cursor:pointer;}
+.pie-dialog-body{display:grid;grid-template-columns:minmax(190px,250px) minmax(180px,1fr);align-items:center;gap:22px;padding-top:16px;}
+.pie-chart{width:100%;aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(15,23,42,.08);position:relative;}
+.pie-chart::after{content:'';position:absolute;inset:27%;background:#fff;border-radius:50%;box-shadow:0 0 0 1px #edf2f7;z-index:1;}
+.pie-center{position:absolute;inset:28%;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:1.1;pointer-events:none;}
+.pie-center strong{font-family:'JetBrains Mono',monospace;color:#0b1e3d;font-size:.88rem;}.pie-center span{margin-top:3px;color:var(--text-muted);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.pie-legend{display:grid;gap:7px;max-height:260px;overflow:auto;padding-right:3px;}
+.pie-legend-row{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:7px;align-items:center;font-size:.71rem;}
+.pie-swatch{width:10px;height:10px;border-radius:3px;}.pie-label{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.pie-value,.pie-percent{font-family:'JetBrains Mono',monospace;color:#1e4d8c;font-size:.67rem;white-space:nowrap;}.pie-percent{min-width:46px;text-align:right;color:#0b6b4f;font-weight:800;}
+.pie-empty{padding:30px;text-align:center;color:var(--text-muted);font-size:.78rem;}
+
+/* DESKTOP SWITCH */
+@media(min-width:901px){
+  .table-wrapper{display:block;}
+  .cards-container{display:none;}
+  .toolbar{padding:10px 20px 8px;}
+  /* Compact desktop rows: fit more spaces without making the register hard to read. */
+  .facility-table{font-size:.78rem;}
+  .facility-table thead th{padding:8px 9px;font-size:.68rem;}
+  .facility-table td{padding:6px 9px;}
+  .td-sr{font-size:.68rem;}
+  .td-name{font-size:.78rem;}
+  .td-floor,.td-block,.td-muted,.td-num{font-size:.74rem;}
+  .td-dims{font-size:.69rem;}
+  .cat-badge{font-size:.60rem;padding:2px 7px;}
+  .total-row td,.selected-total-row td{padding:7px 9px;font-size:.72rem;}
+  .total-row .td-num,.selected-total-row .td-num{font-size:.82rem;}
+}
+@media(min-width:901px){.table-scroll{overflow-x:hidden}}
+
+/* Area-first embedded register */
+.toolbar{gap:6px;padding:6px 14px 7px;border-top:3px solid #f5a623}
+.toolbar-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.toolbar-title h1{font-size:.95rem;line-height:1.1;color:#0b1e3d;letter-spacing:-.01em}
+.filter-row{display:grid;grid-template-columns:auto auto auto 1fr;gap:8px}
+.filter-row .count-badge{justify-self:end}
+.filter-select,#searchInput,.clear-btn{min-height:32px;font-size:.76rem}
+#searchInput{padding:6px 9px 6px 31px;border-radius:6px}
+.search-icon{left:9px;font-size:.72rem}
+.filter-select{padding:5px 8px;border-radius:6px}
+.clear-btn{padding:5px 10px;border-radius:6px}
+.select-btn{background:#1e4d8c;color:#fff;border-color:#1e4d8c}
+.select-btn:hover{background:#173f76;color:#fff}
+.table-wrapper{padding:22px 14px 18px}
+.table-scroll{max-height:calc(100vh - 145px);min-height:310px;border:1px solid var(--border)}
+.facility-table{width:100%;min-width:0}
+.facility-table th:nth-child(1),.facility-table td:nth-child(1){width:2%}
+.facility-table th:nth-child(2),.facility-table td:nth-child(2){width:16%}
+.facility-table th:nth-child(3),.facility-table td:nth-child(3){width:8%}
+.facility-table th:nth-child(4),.facility-table td:nth-child(4){width:13%}
+.facility-table th:nth-child(5),.facility-table td:nth-child(5){width:6%}
+.facility-table th:nth-child(6),.facility-table td:nth-child(6){width:7%}
+.facility-table th:nth-child(7),.facility-table td:nth-child(7){width:18%}
+.facility-table th:nth-child(8),.facility-table td:nth-child(8){width:7%}
+.facility-table th:nth-child(9),.facility-table td:nth-child(9){width:6%}
+.facility-table th:nth-child(10),.facility-table td:nth-child(10){width:5%}
+.facility-table th:nth-child(11),.facility-table td:nth-child(11){width:6%}
+.facility-table th:nth-child(12),.facility-table td:nth-child(12){width:6%}
+.facility-table td:nth-child(3) .cat-badge{max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.facility-table thead th:nth-child(4){background:#173f76}
+.facility-table tbody td:nth-child(4),.facility-table tbody td:nth-child(7){background:#fff9ec!important;box-shadow:-1px 0 0 #ead8b6}
+.facility-table tbody td:nth-child(5),.facility-table tbody td:nth-child(6){background:#edf4ff!important;box-shadow:-1px 0 0 #d6e1ef}
+.facility-table thead{position:sticky;top:0;z-index:5}
+.facility-table tfoot{position:sticky;bottom:0;z-index:4;box-shadow:0 -2px 7px rgba(15,23,42,.12)}
+.facility-table td:nth-child(4){font-weight:600;color:#334155;background:rgba(245,166,35,.05)}
+.facility-table td:nth-child(5),.facility-table td:nth-child(6){font-weight:800;font-size:.86rem;background:rgba(30,77,140,.06)}
+.total-row td{background:#e7eef8!important;color:#0b1e3d!important}
+.total-row .td-num{color:#0b6b4f!important;font-size:.92rem}
+.card-areas{margin-top:7px;padding:8px 10px;background:#edf4ff;border-radius:7px;justify-content:space-between}
+.area-chip{font-size:.84rem;font-weight:800;color:#1e4d8c}
+.card-dims{font-size:.73rem;color:#334155}
+.card-plan-btn{width:100%;min-height:40px;margin-top:8px;border:0;border-radius:7px;background:#0b1e3d;color:#fff;font-size:.78rem;font-weight:800;cursor:pointer}
+@media(max-width:900px){
+  .toolbar{position:relative;padding:8px;gap:7px}
+  .toolbar-title{align-items:flex-start}
+  .filter-row{grid-template-columns:1fr 1fr}
+  .filter-row .clear-btn{width:100%}
+  .cards-container{padding:12px}
+  .card{margin-bottom:12px;border-radius:10px}
+  .card-body{padding:12px 10px 12px 12px}
+  .card-name{font-size:1rem;line-height:1.4}
+  .card-meta{font-size:.8rem;line-height:1.45;gap:5px 12px}
+  .card-areas{gap:8px;padding:10px}
+  .area-chip{flex:1;font-size:.86rem;line-height:1.35;white-space:normal}
+  .card-checkbox{padding:12px}.card-checkbox input{width:20px;height:20px}
+}
+@media(max-width:620px){
+  .toolbar{gap:7px;padding:8px}
+  .toolbar-title h1{font-size:.92rem}
+  .filter-row{grid-template-columns:1fr}
+  .filter-select,#searchInput,.clear-btn{min-height:36px;font-size:.82rem}
+  .count-badge{text-align:center;font-size:.8rem;padding:4px}
+  .cards-container{padding:9px}
+  .pie-dialog-inner{padding:14px}.pie-dialog-body{grid-template-columns:1fr;gap:16px}.pie-chart{width:min(230px,70vw);justify-self:center}.pie-legend{max-height:190px}
+  .card-top{display:block}.card-sr{display:inline-block;margin-top:4px}
+  .card-areas{display:grid;grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="space-menu-spacer" aria-hidden="true"></div>
+<div class="toolbar">
+  <div class="toolbar-title">
+    <h1>FSK Space</h1>
+  </div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search space name, category, program, grade…" oninput="filterAll()">
+  </div>
+  <div class="filter-row">
+    <button class="clear-btn" id="headerSubcategoryFilter" type="button" onclick="toggleSubcategoryMenu(event,this)">All Subcategories ▾</button>
+    <label class="clear-btn select-btn check-visible-control"><input type="checkbox" id="selectVisibleToggle" aria-label="Select all visible spaces" onchange="setVisibleSelection(this.checked)"><span>Select visible</span></label>
+    <button class="clear-btn" id="selectedChartBtn" onclick="openSelectedChart()" disabled title="Select spaces to view their chart">Selected chart</button>
+    <button class="clear-btn" onclick="clearAll()">Clear filters</button>
+    <span class="count-badge" id="countLabel">456 records total</span>
+  </div>
+</div>
+
+<div class="category-filter-menu" id="categoryFilterMenu" hidden>
+  <div class="category-filter-actions"><button type="button" onclick="selectAllCategories()">Select all</button><button type="button" onclick="clearCategorySelection()">Clear</button></div>
+  <div id="categoryOptions"></div>
+</div>
+<div class="category-filter-menu" id="subcategoryFilterMenu" hidden>
+  <div class="category-filter-actions"><button type="button" onclick="selectAllSubcategories()">Select all</button><button type="button" onclick="clearSubcategorySelection()">Clear</button></div>
+  <div id="subcategoryOptions"></div>
+</div>
+
+<div class="multi-filter-menu" id="multiFilterMenu" hidden>
+  <div class="multi-filter-actions"><button type="button" onclick="selectAllActiveFilter()">Select all</button><button type="button" onclick="clearActiveFilter()">Clear</button></div>
+  <div id="multiFilterOptions"></div>
+</div>
+
+<dialog class="pie-dialog" id="selectedChartDialog" aria-labelledby="pieDialogTitle">
+  <div class="pie-dialog-inner">
+    <div class="pie-dialog-head">
+      <div><h2 class="pie-dialog-title" id="pieDialogTitle">Selected space area breakdown</h2><p class="pie-dialog-subtitle" id="pieDialogSubtitle"></p></div>
+      <button class="pie-close" type="button" onclick="closeSelectedChart()" aria-label="Close chart">×</button>
+    </div>
+    <div class="pie-dialog-body" id="pieDialogBody"></div>
+  </div>
+</dialog>
+
+<!-- DESKTOP TABLE -->
+<div class="table-wrapper">
+  <div class="table-scroll">
+    <table class="facility-table">
+      <thead>
+        <tr>
+          <th class="td-cb" style="cursor:default"><input type="checkbox" id="selectAll" onchange="toggleAll(this)" style="accent-color:#60a5fa;cursor:pointer;width:15px;height:15px"></th>
+          <th onclick="sortBy(3,'str')"><div class="th-inner"><span class="th-label">Space Name</span><span class="sort-arrow" id="sa3">↕</span></div></th>
+          <th onclick="sortBy(4,'str')"><div class="th-inner"><button class="header-filter-select" id="headerCategoryFilter" type="button" aria-label="Filter by category" title="Filter by category" onclick="toggleCategoryMenu(event,this)"></button><span class="th-label">Category</span><span class="sort-arrow" id="sa4">↕</span></div></th>
+          <th onclick="sortBy(13,'str')"><div class="th-inner"><span class="th-label">Area Exact</span><span class="sort-arrow" id="sa13">↕</span></div></th>
+          <th onclick="sortBy(8,'num')" style="text-align:right"><div class="th-inner" style="justify-content:flex-end"><span class="th-label">SQ MTR</span><span class="sort-arrow" id="sa8">↕</span></div></th>
+          <th onclick="sortBy(9,'num')" style="text-align:right"><div class="th-inner" style="justify-content:flex-end"><span class="th-label">SQ FT</span><span class="sort-arrow" id="sa9">↕</span></div></th>
+          <th onclick="sortBy(10,'str')"><div class="th-inner"><span class="th-label">L X W</span><span class="sort-arrow" id="sa10">↕</span></div></th>
+          <th onclick="sortBy(1,'str')"><div class="th-inner"><button class="header-filter-select" id="headerFloorFilter" type="button" aria-label="Filter by floor" title="Filter by floor" onclick="openMultiFilter('floor',this,event)"></button><span class="th-label">Floor</span><span class="sort-arrow" id="sa1">↕</span></div></th>
+          <th onclick="sortBy(2,'str')"><div class="th-inner"><button class="header-filter-select" id="headerBlockFilter" type="button" aria-label="Filter by block" title="Filter by block" onclick="openMultiFilter('block',this,event)"></button><span class="th-label">Block</span><span class="sort-arrow" id="sa2">↕</span></div></th>
+          <th onclick="sortBy(6,'str')"><div class="th-inner"><button class="header-filter-select" id="headerGradeFilter" type="button" aria-label="Filter by grade" title="Filter by grade" onclick="openMultiFilter('grade',this,event)"></button><span class="th-label">Grade</span><span class="sort-arrow" id="sa6">↕</span></div></th>
+          <th onclick="sortBy(7,'str')"><div class="th-inner"><span class="th-label">Section No.</span><span class="sort-arrow" id="sa7">↕</span></div></th>
+          <th onclick="sortBy(5,'str')"><div class="th-inner"><button class="header-filter-select" id="headerProgrammeFilter" type="button" aria-label="Filter by programme" title="Filter by programme" onclick="openMultiFilter('programme',this,event)"></button><span class="th-label">Programme</span><span class="sort-arrow" id="sa5">↕</span></div></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="4" style="text-align:right;font-weight:700;color:var(--text-muted)">FILTERED AREA TOTAL →</td>
+          <td class="td-num" id="totalMtr">0.00</td>
+          <td class="td-num" id="totalFt">0.00</td>
+          <td colspan="6"></td>
+        </tr>
+        <tr class="selected-total-row" aria-live="polite">
+          <td colspan="4" id="selectedTotalLabel" style="text-align:right">SELECTED AREA TOTAL (0 SPACES) →</td>
+          <td class="td-num" id="selectedTotalMtr">0.00</td>
+          <td class="td-num" id="selectedTotalFt">0.00</td>
+          <td colspan="6"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <div class="no-results" id="noResultsD">
+    <div class="no-results-icon">🔍</div><h3>No spaces found</h3>
+  </div>
+</div>
+
+<!-- MOBILE CARDS -->
+<div class="cards-container" id="cardsContainer"></div>
+<div class="no-results" id="noResultsM">
+  <div class="no-results-icon">🔍</div><h3>No spaces found</h3>
+</div>
+
+<script>
+const data = [[3,"Ground Floor","Ground","Security Cabin","ADMIN","\u2014","\u2014","\u2014",8,86.08,"2.714 MTR (8'-11\") X 3.1 MTR (10'-2\")","\u2014","Security Cabin","Area: 8.38 SQ MTR / 90.17 SQ FT"],[4,"Ground Floor","Ground","Bike Parking","PARKING","\u2014","\u2014","\u2014",238,2560.88,"2.229 MTR (7'-4\") X 109.69 MTR (359'-10\")","\u2014","Bike Parking","238.42 SQ MTR / 2566.31 SQ FT"],[11,"Ground Floor","Ground","Car Parking","PARKING","\u2014","\u2014","\u2014",632,6800.32,"10.771 MTR (35'-4\") X 45.372 MTR (48'-10\")","\u2014","Car Parking","631.89 SQ MTR / 6801.63 SQ FT"],[19,"Ground Floor","Ground","Open Class Room","CLASSROOM","\u2014","\u2014","\u2014",48,516.48,"10.726 MTR (35'-2\") X 3.560 MTR (11'-8\")","\u2014","Open Class Room","Area: 47.53 SQ MTR / 511.64 SQ FT"],[20,"Ground Floor","Ground","Gate Pass Cabin","ADMIN","\u2014","\u2014","\u2014",18,193.68,"4.534 MTR (14'-11\") X 3.567 MTR (11'-8\")","\u2014","Gate Pass Cabin","Area: 18.35 SQ MTR / 197.56 SQ FT"],[21,"Ground Floor","Ground","Jungle Gym","PE","\u2014","\u2014","\u2014",661,7112.36,"16.364 MTR (53'-8\") X 40.879 MTR (134'-1\")","\u2014","Jungle Gym","Area: 661.29 SQ MTR / 7118.01 SQ FT"],[27,"Ground Floor","Ground","Basketball Court","PE","\u2014","\u2014","\u2014",1962,21111.12,"70.358 MTR (230'-10\") X 29.428 MTR (96'-7\")","\u2014","Basketball Court","Area: 1962.29 SQ MTR / 21121.90 SQ FT"],[28,"Ground Floor","Ground","New Kitchen","FOOD","\u2014","\u2014","\u2014",2290,24640.399999999998,"71.384 MTR (234'-2\") X 32.039 MTR (105'-1\")","\u2014","New Kitchen & Dining Area","Area: 2289.58 SQ MTR / 24644.78 SQ FT"],[29,"Ground Floor","Ground","Football Ground","PE","\u2014","\u2014","\u2014",6866,73878.16,"70.871 MTR (232'-6\") X 103.665 MTR (340'-1\")","\u2014","Football Ground","Area: 6865.84 SQ MTR / 73903.22 SQ FT"],[30,"Ground Floor","Ground","Racing Track","PE","\u2014","\u2014","\u2014",1073,11545.48,"9.082 MTR (29'-10\") X 115.593 MTR (379'-3\")","\u2014","Racing Track","Area: 1072.79 SQ MTR / 11547.44 SQ FT"],[31,"Ground Floor","Ground","Cricket Practice Net","PE","\u2014","\u2014","\u2014",686,7381.36,"6.609 MTR (21'-8\") X 85.344 MTR (280'-0\")","\u2014","Cricket Practice Net","Area: 685.57 SQ MTR / 7379.38 SQ FT"],[37,"Ground Floor","Ground","Topspine , Pickle Ball Ground","PE","\u2014","\u2014","\u2014",583,6273.08,"49.934 MTR (163'-10\") X 12.422 MTR (40'-9\")","PICKLE BALL GROUND","Pickle Ball Ground","Area: 582.53 SQ MTR / 6270.31 SQ FT"],[46,"Ground Floor","Ground","Hakuna Matata","PE","\u2014","\u2014","\u2014",383,4121.08,"2.729 MTR (8'-11\") X 24.047 MTR (78'-11\")","\u2014","Kids Play Area","Area: 382.59 SQ MTR / 4118.21 SQ FT"],[47,"Ground Floor","Ground","Multi Purpose Ground","PE","\u2014","\u2014","\u2014",444,4777.44,"13.343 MTR (43'-9\") X 34.639 MTR (113'-8\")","\u2014","Multi Purpose Ground","Area: 444.30 SQ MTR / 4782.35 SQ FT"],[56,"Ground Floor",1,"Itadakimasu","FOOD","\u2014","\u2014","\u2014",204,2195.04,"7.000 MTR (23'-0\") X 33.126 MTR (108'-8\")","\u2014","Itadakimasu","Area: 204.20 SQ MTR / 2197.96 SQ FT"],[59,"Ground Floor",1,"Concoction, Kitchen","FOOD","\u2014","\u2014","\u2014",273,2937.48,"22.449 MTR (73'-8\") X 12.311 MTR (40'-5\")","Kitchen","Concoction","Area: 273.44 SQ MTR / 2943.26 SQ FT"],[60,"Ground Floor",1,"Life Line","ADMIN","\u2014","\u2014","\u2014",98,1054.48,"6.000 MTR (19'-8\") X 13.851 MTR (45'-5\")","STAFF ROOM","Life Line","Area: 98.00 SQ MTR / 1054.85 SQ FT"],[61,"Ground Floor",1,"Server Room","UTILITY","\u2014","\u2014","\u2014",18,193.68,"7.000 MTR (23'-0\") X 2.500 MTR (8'-2\")","\u2014","Server Room","Area: 17.50 SQ MTR / 188.37 SQ FT"],[62,"Ground Floor",1,"X Box","AUDITORIUM","\u2014","\u2014","\u2014",117,1258.92,"7.000 MTR (23'-0\") X 16.750 MTR (54'-11\")","\u2014","X Box","Area: 117.25 SQ MTR / 1262.07 SQ FT"],[64,"Ground Floor",1,"Toilet","TOILET","\u2014","\u2014","\u2014",30,322.8,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Block 1 Toilet","Area: 29.75 SQ MTR / 320.23 SQ FT"],[65,"Ground Floor",1,"Toilet","TOILET","\u2014","\u2014","\u2014",30,322.8,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Block 1 Toilet","Area: 29.75 SQ MTR / 320.23 SQ FT"],[67,"Ground Floor",1,"IT Cabin","ADMIN","\u2014","\u2014","\u2014",5,53.8,"3.270 MTR (10'-9\") X 1.473 MTR (4'-10\")","\u2014","IT Cabin","4.93 SQ MTR / 53.04 SQ FT"],[68,"Ground Floor",1,"CCTV Security Cabin","ADMIN","\u2014","\u2014","\u2014",16,172.16,"3.850 MTR (12'-8\") X 4.250 MTR (13'-11\")","\u2014","CCTV Security Cabin","15.58 SQ MTR / 167.73 SQ FT"],[69,"Ground Floor",1,"Account Manager","ADMIN","\u2014","\u2014","\u2014",11,118.36,"4.126 MTR (13'-6\") X 2.849 MTR (9'-4\")","\u2014","Account Manager","Area: 10.85 SQ MTR / 116.81 SQ FT"],[70,"Ground Floor",1,"Admin Manager","ADMIN","\u2014","\u2014","\u2014",11,118.36,"4.126 MTR (13'-6\") X 2.849 MTR (9'-4\")","\u2014","Admin Manager","Area: 10.85 SQ MTR / 116.81 SQ FT"],[71,"Ground Floor",1,"Admin Manager","ADMIN","\u2014","\u2014","\u2014",11,118.36,"4.126 MTR (13'-6\") X 2.849 MTR (9'-4\")","\u2014","Admin Manager","Area: 10.85 SQ MTR / 116.81 SQ FT"],[72,"Ground Floor",1,"Admin Manager","ADMIN","\u2014","\u2014","\u2014",12,129.12,"4.126 MTR (13'-6\") X 2.849 MTR (9'-4\")","\u2014","Admin Manager","11.81 SQ MTR / 127.15 SQ FT"],[73,"Ground Floor",1,"HR Cabin","ADMIN","\u2014","\u2014","\u2014",15,161.4,"7.536 MTR (24'-9\") X 1.953 MTR (6'-5\")","\u2014","HR Cabin","Area: 14.75 SQ MTR / 158.80 SQ FT"],[74,"Ground Floor",1,"HR Meeting Room","ADMIN","\u2014","\u2014","\u2014",9,96.84,"3.374 MTR (11'-1\") X 2.902 MTR (9'-6\")","\u2014","HR Meeting Room","9.33 SQ MTR / 100.45 SQ FT"],[75,"Ground Floor",1,"HR Head","ADMIN","\u2014","\u2014","\u2014",8,86.08,"2.756 MTR (9'-1\") X 2.900 MTR (9'-6\")","\u2014","HR Head","7.78 SQ MTR / 83.69 SQ FT"],[82,"Ground Floor","Open","Anfiteatro","AMPHITHEATRE","\u2014","\u2014","\u2014",91,979.16,"8.233 MTR (27'-0\") X 10.984 MTR (36'-0\")","\u2014","Anfiteatro","Area: 90.57 SQ MTR / 974.92 SQ FT"],[83,"Ground Floor","Open","Gymnasium","PE","\u2014","\u2014","\u2014",68,731.68,"8.250 MTR (27'-1\") X 8.257 MTR (27'-1\")","\u2014","Calisthenics","Area: 68.07 SQ MTR / 732.74 SQ FT"],[84,"Ground Floor","Open","Atrium","ATRIUM","\u2014","\u2014","\u2014",54,581.04,"8.246 MTR (27'-1\") X 19.499 MTR (64'-0\")","\u2014","Atrium","Area: 53.90 SQ MTR / 580.13 SQ FT"],[87,"Ground Floor",1,"Nature Parents Lounge","ADMIN","\u2014","\u2014","\u2014",48,516.48,"7.000 MTR (23'-0\") X 3.900 MTR (12'-10\")","\u2014","Nature Parents Lounge","Area: 48.02 SQ MTR / 516.88 SQ FT"],[88,"Ground Floor",2,"Transport","ADMIN","\u2014","\u2014","\u2014",21,225.96,"3.350 MTR (11'-0\") X 2.991 MTR (9'-10\")","\u2014","Transport","Area: 10.47 SQ MTR / 112.68 SQ FT"],[89,"Ground Floor",2,"Account","ADMIN","\u2014","\u2014","\u2014",10,107.6,"3.500 MTR (11'-6\") X 2.750 MTR (9'-0\")","\u2014","Account","Area: 10.50 SQ MTR / 113.02 SQ FT"],[90,"Ground Floor",1,"Hub Front Desk","ADMIN","\u2014","\u2014","\u2014",11,118.36,"6.500 MTR (21'-4\") X 2.754 MTR (9'-0\")","\u2014","Hub Front Desk","Area: 17.87 SQ MTR / 192.40 SQ FT"],[91,"Ground Floor",1,"Next Step","ADMIN","\u2014","\u2014","\u2014",18,193.68,"6.500 MTR (21'-4\") X 5.611 MTR (18'-5\")","\u2014","Next Step","Area: 36.56 SQ MTR / 393.54 SQ FT"],[92,"Ground Floor",1,"Power House","STAFF ROOM","\u2014","\u2014","\u2014",63,677.88,"6.500 MTR (21'-4\") X 8.272 MTR (27'-2\")","ADMIN","Power House","Area: 62.56 SQ MTR / 673.42 SQ FT"],[93,"Ground Floor",1,"Power House Meeting Room 1","MEETING ROOM","\u2014","\u2014","\u2014",5,53.8,"3.500 MTR (11'-6\") X 2.750 MTR (9'-0\")","\u2014","Power House Meeting Room 1","Area: 4.95 SQ MTR / 53.30 SQ FT"],[94,"Ground Floor",1,"Power House Meeting Room 1","MEETING ROOM","\u2014","\u2014","\u2014",5,53.8,"3.500 MTR (11'-6\") X 2.750 MTR (9'-0\")","\u2014","Power House Meeting Room 2","Area: 4.95 SQ MTR / 53.30 SQ FT"],[95,"Ground Floor",1,"\u2014","HOS","\u2014","\u2014","\u2014",19,204.44,"7.000 MTR (23'-0\") X 2.711 MTR (8'-11\")","\u2014","2 HOS BS Room","Area: 18.97 SQ MTR / 204.20 SQ FT"],[96,"Ground Floor",1,"2 HOS","HOS","\u2014","\u2014","\u2014",39,419.64,"7.000 MTR (23'-0\") X 5.625 MTR (18'-5\")","\u2014","2 HOS","Area: 39.37 SQ MTR / 423.83 SQ FT"],[97,"Ground Floor",2,"HOS","HOS","\u2014","\u2014","\u2014",36,387.36,"6.500 MTR (21'-4\") X 5.501 MTR (18'-1\")","\u2014","HOS","Area: 35.75 SQ MTR / 384.81 SQ FT"],[98,"Ground Floor",2,"\u2014","HOS","\u2014","\u2014","\u2014",18,193.68,"7.000 MTR (23'-0\") X 2.711 MTR (8'-11\")","\u2014","HOS BS Room","Area: 17.91 SQ MTR / 192.76 SQ FT"],[99,"Ground Floor",2,"Dewey","MEETING ROOM","\u2014","\u2014","\u2014",36,387.36,"6.500 MTR (21'-4\") X 5.500 MTR (18'-1\")","\u2014","Dewey","Area: 35.75 SQ MTR / 384.82 SQ FT"],[100,"Ground Floor",2,"Piaget","MEETING ROOM","\u2014","\u2014","\u2014",36,387.36,"6.500 MTR (21'-4\") X 5.499 MTR (18'-0\")","\u2014","Piaget","Area: 35.75 SQ MTR / 384.82 SQ FT"],[101,"Ground Floor",2,"Cube","MEETING ROOM","\u2014","\u2014","\u2014",36,387.36,"6.500 MTR (21'-4\") X 5.501 MTR (18'-1\")","\u2014","Cube","Area: 35.88 SQ MTR / 386.16 SQ FT"],[102,"Ground Floor",2,"Crew Cafe","FOOD","\u2014","\u2014","\u2014",20,215.2,"6.000 MTR (19'-8\") X 3.004 MTR (9'-10\")","CAFE","Crew Cafe","Area: 19.51 SQ MTR / 209.97 SQ FT"],[103,"Ground Floor",2,"Cast Sci Lab","LAB","\u2014","\u2014","\u2014",124,1334.24,"14.235 MTR (46'-8\") X 8.458 MTR (27'-9\")","Physics Lab","Cast Sci Lab","Area: 124.02 SQ MTR / 1334.94 SQ FT"],[104,"Ground Floor",2,"Nature Physic Lab","LAB","\u2014","\u2014","\u2014",60,645.6,"7.000 MTR (23'-0\") X 8.500 MTR (27'-11\")","Physics Lab","Nature Physic Lab","Area: 59.50 SQ MTR / 640.45 SQ FT"],[106,"Ground Floor","Open","Story Well Badminton Practice","PE","\u2014","\u2014","\u2014",66,710.16,"7.938 MTR (26'-1\") X 8.501 MTR (27'-11\")","BADMINTON PRACTICE","Story Well  / Open Space","Area: 66.06 SQ MTR / 711.08 SQ FT"],[106,"Ground Floor",3,"Toilet","TOILET","\u2014","\u2014","\u2014",28,301.28,"6.501 MTR (21'-4\") X 4.249 MTR (13'-11\")","\u2014","Block 3 Toilet","Area: 27.63 SQ MTR / 297.36 SQ FT"],[107,"Ground Floor",3,"Toilet","TOILET","\u2014","\u2014","\u2014",28,301.28,"6.501 MTR (21'-4\") X 4.249 MTR (13'-11\")","\u2014","Block 3 Toilet","Area: 27.63 SQ MTR / 297.36 SQ FT"],[109,"Ground Floor",2,"Senior Process Coordinator","ADMIN","\u2014","\u2014","\u2014",16,172.16,"5.250 MTR (17'-3\") X 2.675 MTR (8'-9\")","CR","Senior Process Coordinator","Area: 15.65 SQ MTR / 168.47 SQ FT"],[110,"Ground Floor",2,"Senior School Principal","ADMIN","\u2014","\u2014","\u2014",14,150.64,"4.981 MTR (16'-4\") X 2.650 MTR (8'-8\")","CR","Senior School Principal","Area: 14.19 SQ MTR / 152.72 SQ FT"],[111,"Ground Floor",2,"MYP Coordination","ADMIN","\u2014","\u2014","\u2014",13,139.88,"4.673 MTR (15'-4\") X 2.750 MTR (9'-0\")","CR","MYP Coordination","Area: 13.38 SQ MTR / 144.02 SQ FT"],[112,"Ground Floor",2,"DP & MLC Coordination","ADMIN","\u2014","\u2014","\u2014",13,139.88,"4.506 MTR (14'-9\") X 2.757 MTR (9'-1\")","CR","DP & MLC Coordination","Area: 12.61 SQ MTR / 135.73 SQ FT"],[113,"Ground Floor",2,"DP Coordination","ADMIN","\u2014","\u2014","\u2014",12,129.12,"4.161 MTR (13'-8\") X 2.743 MTR (9'-0\")","CR","DP Coordination","Area: 11.74 SQ MTR / 126.41 SQ FT"],[114,"Ground Floor",2,"Myplt Meeting Room","ADMIN","\u2014","\u2014","\u2014",11,118.36,"3.930 MTR (12'-11\") X 2.750 MTR (9'-0\")","CR","Myplt Meeting Room","Area: 10.97 SQ MTR / 118.08 SQ FT"],[115,"Ground Floor",2,"Dplt Meeting Room","ADMIN","\u2014","\u2014","\u2014",10,107.6,"3.593 MTR (11'-9\") X 2.649 MTR (8'-8\")","CR","Dplt Meeting Room","Area: 9.99 SQ MTR / 107.55 SQ FT"],[116,"Ground Floor",2,"Synchrony","ADMIN","\u2014","\u2014","\u2014",10,107.6,"3.218 MTR (10'-7\") X 2.654 MTR (8'-8\")","\u2014","Synchrony","Area: 9.55 SQ MTR / 102.80 SQ FT"],[117,"Ground Floor",2,"Confib","ADMIN","\u2014","\u2014","\u2014",8,86.08,"2.967 MTR (9'-9\") X 2.640 MTR (8'-8\")","\u2014","Confib","Area: 8.30 SQ MTR / 89.29 SQ FT"],[118,"Ground Floor",2,"Noname","ADMIN","\u2014","\u2014","\u2014",8,86.08,"2.874 MTR (9'-5\") X 2.500 MTR (8'-2\")","\u2014","Noname","Area: 8.38 SQ MTR / 90.23 SQ FT"],[119,"Ground Floor",2,"Noname","ADMIN","\u2014","\u2014","\u2014",8,86.08,"2.874 MTR (9'-5\") X 2.500 MTR (8'-2\")","\u2014","Noname","8.17 SQ MTR / 87.94 SQ FT"],[120,"Ground Floor",2,"Linehan","ADMIN","\u2014","\u2014","\u2014",8,86.08,"2.867 MTR (9'-5\") X 2.773 MTR (9'-1\")","\u2014","Linehan","Area: 7.87 SQ MTR / 84.71 SQ FT"],[121,"Ground Floor",2,"Heyes","ADMIN","\u2014","\u2014","\u2014",8,86.08,"2.850 MTR (9'-4\") X 2.654 MTR (8'-8\")","\u2014","Heyes","Area: 7.87 SQ MTR / 84.71 SQ FT"],[122,"Ground Floor",2,"Career Counsellor Room","ADMIN","\u2014","\u2014","\u2014",21,225.96,"7.001 MTR (23'-0\") X 2.875 MTR (9'-5\")","\u2014","Career Counsellor Room","20.56 SQ MTR / 221.33 SQ FT"],[123,"Ground Floor",2,"Focus Box","ADMIN","\u2014","\u2014","\u2014",18,193.68,"7.000 MTR (23'-0\") X 2.500 MTR (8'-2\")","\u2014","Focus Box","17.50 SQ MTR / 188.37 SQ FT"],[124,"Ground Floor",2,"Tana Riri, Recording Room","ARTS","\u2014","\u2014","\u2014",59,634.84,"7.000 MTR (23'-0\") X 8.500 MTR (27'-11\")","Recordig Room","Tana Riri","Area: 58.63 SQ MTR / 631.03 SQ FT"],[125,"Ground Floor",2,"Paper Mint","ADMIN","\u2014","\u2014","\u2014",19,204.44,"7.000 MTR (23'-0\") X 2.750 MTR (9'-0\")","\u2014","Paper Mint","Area: 19.25 SQ MTR / 207.21 SQ FT"],[126,"Ground Floor",2,"Ups Room","UTILITY","\u2014","\u2014","\u2014",20,215.2,"7.000 MTR (23'-0\") X 2.876 MTR (9'-5\")","\u2014","Ups Room","Area: 20.21 SQ MTR / 217.54 SQ FT"],[127,"Ground Floor",2,"\u2014","ADMIN","\u2014","\u2014","\u2014",7,75.32,"2.874 MTR (9'-5\") X 2.500 MTR (8'-2\")","\u2014","Noname","Area: 7.16 SQ MTR / 77.07 SQ FT"],[128,"Ground Floor",2,"\u2014","ADMIN","\u2014","\u2014","\u2014",8,86.08,"2.874 MTR (9'-5\") X 2.500 MTR (8'-2\")","\u2014","Noname","Area: 7.93 SQ MTR / 85.39 SQ FT"],[129,"Ground Floor",2,"\u2014","ADMIN","\u2014","\u2014","\u2014",7,75.32,"2.853 MTR (9'-4\") X 2.800 MTR (9'-2\")","\u2014","Elllice","Area: 7.38 SQ MTR / 79.46 SQ FT"],[130,"Ground Floor",2,"Rogers","ADMIN","\u2014","\u2014","\u2014",7,75.32,"2.840 MTR (9'-4\") X 2.568 MTR (8'-5\")","\u2014","Rogers","Area: 7.38 SQ MTR / 79.46 SQ FT"],[131,"Ground Floor",2,"Storage","ADMIN","\u2014","\u2014","\u2014",12,129.12,"3.998 MTR (13'-1\") X 3.000 MTR (9'-10\")","\u2014","Storage","Area: 12.00 SQ MTR / 129.12 SQ FT"],[132,"Ground Floor",2,"Head- Career And University Guidance Counselling","ADMIN","\u2014","\u2014","\u2014",8,86.08,"2.504 MTR (8'-3\") X 2.850 MTR (9'-4\")","\u2014","Head- Career And University Guidance Counselling","7.50 SQ MTR / 80.77 SQ FT"],[133,"Ground Floor",2,"Well Being Counsellor","ADMIN","\u2014","\u2014","\u2014",16,172.16,"3.487 MTR (11'-5\") X 4.030 MTR (13'-3\")","\u2014","Well Being Counsellor","16.22 SQ MTR / 174.60 SQ FT"],[134,"Ground Floor",2,"Transport","ADMIN","\u2014","\u2014","\u2014",10,107.6,"3.350 MTR (11'-0\") X 2.991 MTR (9'-10\")","\u2014","Transport","Area: 10.47 SQ MTR / 112.68 SQ FT"],[135,"Ground Floor",2,"Account","ADMIN","\u2014","\u2014","\u2014",11,118.36,"3.500 MTR (11'-6\") X 2.750 MTR (9'-0\")","\u2014","Account","Area: 10.50 SQ MTR / 113.02 SQ FT"],[137,"Ground Floor","Open","Badminton Court","PE","\u2014","\u2014","\u2014",259,2786.84,"7.742 MTR (25'-5\") X 33.275 MTR (109'-2\")","\u2014","Badminton Court","Area: 258.95 SQ MTR / 2787.28 SQ FT"],[139,"Ground Floor","Open","Bone Appetite","FOOD","\u2014","\u2014","\u2014",90,968.4,"10.999 MTR (36'-1\") X 17.975 MTR (59'-0\")","\u2014","Bone Appetite","Area: 89.84 SQ MTR / 967.05 SQ FT"],[140,"Ground Floor",3,"Trust","CLASSROOM","PYP",1,301,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Trust","Area: 58.47 SQ MTR / 629.40 SQ FT"],[141,"Ground Floor",3,"Joy","CLASSROOM","PYP",1,302,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Joy","Area: 58.47 SQ MTR / 629.40 SQ FT"],[142,"Ground Floor",3,"Truth","CLASSROOM","PYP",1,303,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Truth","Area: 58.47 SQ MTR / 629.40 SQ FT"],[143,"Ground Floor",3,"Amity","CLASSROOM","PYP",1,304,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Amity","Area: 58.47 SQ MTR / 629.40 SQ FT"],[144,"Ground Floor",3,"Peace","CLASSROOM","PYP",1,305,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Peace","57.83 SQ MTR / 622.50 SQ FT"],[145,"Ground Floor",3,"Concord","CLASSROOM","PYP",1,306,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Concord","57.83 SQ MTR / 622.50 SQ FT"],[146,"Ground Floor",3,"Harmony","CLASSROOM","PYP",1,307,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Harmony","57.83 SQ MTR / 622.50 SQ FT"],[147,"Ground Floor",3,"Hope","CLASSROOM","PYP",1,308,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Hope","57.83 SQ MTR / 622.50 SQ FT"],[148,"Ground Floor",3,"Staff Room","STAFF ROOM","\u2014","\u2014","\u2014",8,86.08,"2.827 MTR (9'-3\") X 2.745 MTR (9'-0\")","\u2014","Staff Room","Area: 8.48 SQ MTR / 91.29 SQ FT"],[149,"Ground Floor",3,"Staff Room","STAFF ROOM","\u2014","\u2014","\u2014",8,86.08,"2.827 MTR (9'-3\") X 2.745 MTR (9'-0\")","\u2014","Staff Room","Area: 8.48 SQ MTR / 91.29 SQ FT"],[150,"Ground Floor",3,"Staff Room","STAFF ROOM","\u2014","\u2014","\u2014",16,172.16,"2.809 MTR (9'-3\") X 5.757 MTR (18'-11\")","\u2014","Staff Room","Area: 16.21 SQ MTR / 174.48 SQ FT"],[152,"Ground Floor","Open","Rendezvous","ASSEMBLY","\u2014","\u2014","\u2014",445,4788.2,"17.975 MTR (59'-0\") X 24.692 MTR (81'-0\")","\u2014","Rendezvous","Area: 445.29 SQ MTR / 4793.02 SQ FT"],[159,"Ground Floor",4,"Explore","CLASSROOM","PYP",2,401,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Explore","Area: 58.63 SQ MTR / 631.03 SQ FT"],[160,"Ground Floor",4,"Dream","CLASSROOM","PYP",2,402,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Dream","Area: 58.63 SQ MTR / 631.03 SQ FT"],[161,"Ground Floor",4,"Wonder","CLASSROOM","PYP",2,403,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Wonder","Area: 58.63 SQ MTR / 631.03 SQ FT"],[162,"Ground Floor",4,"Ponder","CLASSROOM","PYP",2,404,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Ponder","Area: 58.63 SQ MTR / 631.03 SQ FT"],[163,"Ground Floor",4,"Create","CLASSROOM","PYP",2,405,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Create","Area: 58.63 SQ MTR / 631.03 SQ FT"],[164,"Ground Floor",4,"Think","CLASSROOM","PYP",2,406,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Think","Area: 58.63 SQ MTR / 631.03 SQ FT"],[165,"Ground Floor",4,"Invent","CLASSROOM","PYP",2,407,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Invent","Area: 58.63 SQ MTR / 631.03 SQ FT"],[166,"Ground Floor",4,"Discover","CLASSROOM","PYP",2,408,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Discover","Area: 58.63 SQ MTR / 631.03 SQ FT"],[170,"Ground Floor",4,"Consilio Design Lab","LAB","\u2014","\u2014","\u2014",60,645.6,"7.002 MTR (23'-0\") X 8.500 MTR (27'-11\")","DESIGN LAB","Consilio Design Lab","Area: 59.50 SQ MTR / 640.45 SQ FT"],[171,"Ground Floor",4,"Funkey Monkey 2","PE","\u2014","\u2014","\u2014",68,731.68,"7.971 MTR (26'-2\") X 8.499 MTR (27'-11\")","\u2014","Funkey Monkey 2","Area: 68.36 SQ MTR / 735.79 SQ FT"],[172,"Ground Floor",5,"Sickbay Saluabra","MEDICAL FACILITIES","\u2014","\u2014","\u2014",59,634.84,"6.997 MTR (22'-11\") X 8.500 MTR (27'-11\")","\u2014","Sickbay Saluabra","Area: 59.49 SQ MTR / 640.36 SQ FT"],[173,"Ground Floor",5,"Hippodrome","MULTI USE HALL","\u2014","\u2014","\u2014",245,2636.2,"18.499 MTR (60'-8\") X 8.500 MTR (27'-11\")","\u2014","Hippodrome","Area: 245.26 SQ MTR / 2639.98 SQ FT"],[174,"Ground Floor",5,"Cucina Cooking Lab","LAB","\u2014","\u2014","\u2014",69,742.4399999999999,"7.928 MTR (26'-0\") X 8.500 MTR (27'-11\")","COOKING LAB","Cucina","68.79 SQ MTR / 740.42 SQ FT"],[176,"Ground Floor",6,"Toilet","TOILET","\u2014","\u2014","\u2014",44,473.44,"4.116 MTR (13'-6\") X 10.000 MTR (32'-10\")","\u2014","Block 6 Toilet","Area: 43.82 SQ MTR / 471.69 SQ FT"],[177,"Ground Floor",6,"Toilet","TOILET","\u2014","\u2014","\u2014",41,441.15999999999997,"4.116 MTR (13'-6\") X 10.000 MTR (32'-10\")","\u2014","Block 6 Toilet","Area: 41.16 SQ MTR / 443.07 SQ FT"],[178,"Ground Floor","Open","Gimnasio","PE","\u2014","\u2014","\u2014",260,2797.6,"33.252 MTR (109'-1\") X 7.969 MTR (26'-2\")","\u2014","Gimnasio","Area: 260.84 SQ MTR / 2807.60 SQ FT"],[180,"Ground Floor",5,"Y Box","AUDITORIUM","\u2014","\u2014","\u2014",155,1667.8,"7.001 MTR (23'-0\") X 22.036 MTR (72'-4\")","\u2014","Y Box","Area: 155.37 SQ MTR / 1672.37 SQ FT"],[181,"Ground Floor",5,"Boy Washroom","TOILET","EYP","SR KG","\u2014",20,215.2,"7.000 MTR (23'-0\") X 2.778 MTR (9'-1\")","\u2014","Boy Washroom","Area: 20.13 SQ MTR / 216.62 SQ FT"],[182,"Ground Floor",5,"Girl Washroom","TOILET","EYP","SR KG","\u2014",20,215.2,"7.000 MTR (23'-0\") X 2.778 MTR (9'-1\")","\u2014","Girl Washroom","Area: 20.13 SQ MTR / 216.62 SQ FT"],[185,"Ground Floor",5,"SR KG JR KG Amphitheatre","CLASSROOM","EYP","SR KG","\u2014",101,1086.76,"8.250 MTR (27'-1\") X 12.250 MTR (40'-2\")","\u2014","SR KG JR KG Amphitheatre","Area: 101.06 SQ MTR / 1087.82 SQ FT"],[186,"Ground Floor",5,"SR KG Extra Classroom","CLASSROOM","EYP","SR KG","\u2014",39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","SR KG Extra Classroom","Area: 38.50 SQ MTR / 414.41 SQ FT"],[187,"Ground Floor",6,"White","CLASSROOM","EYP","JR KG",603,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","White","Area: 38.50 SQ MTR / 414.41 SQ FT"],[188,"Ground Floor",6,"Indigo","CLASSROOM","EYP","JR KG",604,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Indigo","Area: 38.50 SQ MTR / 414.41 SQ FT"],[189,"Ground Floor",6,"Violet","CLASSROOM","EYP","JR KG",605,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Violet","Area: 38.50 SQ MTR / 414.41 SQ FT"],[190,"Ground Floor",6,"Yellow","CLASSROOM","EYP","JR KG",606,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Yellow","Area: 38.50 SQ MTR / 414.41 SQ FT"],[191,"Ground Floor",6,"Green","CLASSROOM","EYP","JR KG",607,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Green","Area: 38.50 SQ MTR / 414.41 SQ FT"],[192,"Ground Floor",6,"Blue","CLASSROOM","EYP","JR KG",608,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Blue","Area: 38.50 SQ MTR / 414.41 SQ FT"],[193,"Ground Floor",6,"Red","CLASSROOM","EYP","JR KG",609,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Red","Area: 38.50 SQ MTR / 414.41 SQ FT"],[194,"Ground Floor",6,"Orange","CLASSROOM","EYP","JR KG",610,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Orange","Area: 38.50 SQ MTR / 414.41 SQ FT"],[195,"Ground Floor",5,"Glitter","CLASSROOM","EYP","SR KG",502,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Glitter","Area: 38.50 SQ MTR / 414.41 SQ FT"],[196,"Ground Floor",5,"Dazzle","CLASSROOM","EYP","SR KG",503,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Dazzle","Area: 38.50 SQ MTR / 414.41 SQ FT"],[197,"Ground Floor",5,"Kindle","CLASSROOM","EYP","SR KG",505,39,419.64,"7.000 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Kindle","Area: 38.50 SQ MTR / 414.41 SQ FT"],[198,"Ground Floor",5,"Sparkle","CLASSROOM","EYP","SR KG",506,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Sparkle","Area: 38.50 SQ MTR / 414.41 SQ FT"],[199,"Ground Floor",5,"Shine","CLASSROOM","EYP","SR KG",507,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Shine","Area: 38.50 SQ MTR / 414.41 SQ FT"],[200,"Ground Floor",5,"Ignite","CLASSROOM","EYP","SR KG",508,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Ignite","Area: 38.50 SQ MTR / 414.41 SQ FT"],[201,"Ground Floor",6,"Blaze","CLASSROOM","EYP","SR KG",601,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Blaze","Area: 38.50 SQ MTR / 414.41 SQ FT"],[202,"Ground Floor",6,"Glimmer","CLASSROOM","EYP","SR KG",602,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Glimmer","Area: 38.50 SQ MTR / 414.41 SQ FT"],[213,"Ground Floor",6,"Vividha","ADMIN","\u2014","\u2014","\u2014",68,731.68,"5.005 MTR (16'-5\") X 13.500 MTR (44'-3\")","\u2014","Vividha","Area: 67.51 SQ MTR / 726.62 SQ FT"],[214,"Ground Floor",6,"Block Play Area","PE","\u2014","\u2014","\u2014",42,451.92,"9.251 MTR (30'-4\") X 5.600 MTR (18'-4\")","\u2014","Block Play Area","Area: 41.50 SQ MTR / 446.72 SQ FT"],[215,"Ground Floor",6,"Kids Sand Play Area","PE","\u2014","\u2014","\u2014",79,850.04,"2.511 MTR (8'-3\") X 24.033 MTR (78'-10\")","\u2014","Kids Sand Play Area","Area: 78.96 SQ MTR / 849.95 SQ FT"],[226,"1ST Floor",1,"Pulse","MULTI USE HALL","\u2014","\u2014","\u2014",142,1527.92,"7.500 MTR (24'-7\") X 16.750 MTR (54'-11\")","\u2014","Pulse","Area: 142.38 SQ MTR / 1532.51 SQ FT"],[228,"1ST Floor",1,"Toilet","TOILET","\u2014","\u2014","\u2014",30,322.8,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Toilet","Area: 29.75 SQ MTR / 320.23 SQ FT"],[229,"1ST Floor",1,"Toilet","TOILET","\u2014","\u2014","\u2014",30,322.8,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Toilet","Area: 29.75 SQ MTR / 320.23 SQ FT"],[230,"1ST Floor",2,"Ray + Alchemy Chemistry Lab","LAB","\u2014","\u2014","\u2014",209,2248.84,"21.367 MTR (70'-1\") X 8.475 MTR (27'-10\")","Cemistry Lab","Ray + Alchemy","Area: 208.91 SQ MTR / 2248.66 SQ FT"],[237,"1ST Floor",4,"Schedio Sci Lab","LAB","\u2014","\u2014","\u2014",60,645.6,"7.000 MTR (23'-0\") X 8.498 MTR (27'-11\")","SCI LAB","Schedio Sci Lab","Area: 59.50 SQ MTR / 640.45 SQ FT"],[238,"1ST Floor",5,"JR School Office","ADMIN","\u2014","\u2014","\u2014",60,645.6,"7.000 MTR (23'-0\") X 8.500 MTR (27'-11\")","\u2014","JR School Office","Area: 59.50 SQ MTR / 640.43 SQ FT"],[239,"1ST Floor",5,"Concurrence","CONFERENCE ROOM","\u2014","\u2014","\u2014",58,624.08,"6.915 MTR (22'-8\") X 8.709 MTR (28'-7\")","\u2014","Concurrence","Area: 58.23 SQ MTR / 626.81 SQ FT"],[240,"1ST Floor",5,"PYP Staff Lounge","ADMIN","\u2014","\u2014","\u2014",166,1786.1599999999999,"19.501 MTR (64'-0\") X 8.500 MTR (27'-11\")","\u2014","PYP Staff Lounge","Area: 165.76 SQ MTR / 1784.21 SQ FT"],[241,"1ST Floor",6,"Day Care","DAY CARE","\u2014","\u2014","\u2014",43,462.68,"4.977 MTR (16'-4\") X 8.499 MTR (27'-11\")","\u2014","Day Care","Area: 42.81 SQ MTR / 460.82 SQ FT"],[242,"1ST Floor",6,"Day Care","DAY CARE","\u2014","\u2014","\u2014",72,774.72,"8.500 MTR (27'-11\") X 8.498 MTR (27'-11\")","\u2014","Day Care","Area: 72.25 SQ MTR / 777.70 SQ FT"],[244,"1ST Floor",6,"Toilet","TOILET","\u2014","\u2014","\u2014",29,312.04,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Block 6 Toilet","Area: 28.81 SQ MTR / 310.15 SQ FT"],[245,"1ST Floor",6,"Toilet","TOILET","\u2014","\u2014","\u2014",29,312.04,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Block 6 Toilet","Area: 28.81 SQ MTR / 310.15 SQ FT"],[246,"1ST Floor",1,"Vygotsky","CLASSROOM","MLC","MLC","\u2014",39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Vygotsky","Area: 39.38 SQ MTR / 423.83 SQ FT"],[247,"1ST Floor",1,"Bruner","CLASSROOM","MLC","MLC","\u2014",15,161.4,"5.450 MTR (17'-11\") X 2.741 MTR (9'-0\")","\u2014","Bruner","Area: 14.85 SQ MTR / 159.86 SQ FT"],[248,"1ST Floor",1,"Pavlov","CLASSROOM","MLC","MLC","\u2014",39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Pavlov","Area: 38.94 SQ MTR / 419.18 SQ FT"],[249,"1ST Floor",1,"Quest Pavlov","CLASSROOM","MLC","MLC",117,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Quest Pavlov","Area: 38.94 SQ MTR / 419.18 SQ FT"],[250,"1ST Floor",1,"Ember","CLASSROOM","MLC","MLC","\u2014",10,107.6,"3.500 MTR (11'-6\") X 2.750 MTR (9'-0\")","\u2014","Ember","Area: 9.63 SQ MTR / 103.60 SQ FT"],[251,"1ST Floor",1,"Zenith","CLASSROOM","MLC","MLC","\u2014",10,107.6,"3.500 MTR (11'-6\") X 2.750 MTR (9'-0\")","\u2014","Zenith","Area: 9.63 SQ MTR / 103.60 SQ FT"],[252,"1ST Floor",1,"Voyage","CLASSROOM","MLC","MLC",118,78,839.28,"7.017 MTR (23'-0\") X 11.125 MTR (36'-6\")","\u2014","Voyage","Area: 77.88 SQ MTR / 838.27 SQ FT"],[253,"1ST Floor",1,"Edge","CLASSROOM","MLC","MLC","\u2014",6,64.56,"2.141 MTR (7'-0\") X 2.645 MTR (8'-8\")","\u2014","Edge","Area: 5.91 SQ MTR / 63.62 SQ FT"],[254,"1ST Floor",1,"Apex","CLASSROOM","MLC","MLC","\u2014",15,161.4,"4.740 MTR (15'-7\") X 3.256 MTR (10'-8\")","\u2014","Apex","Area: 14.88 SQ MTR / 160.19 SQ FT"],[255,"1ST Floor",1,"Axis","CLASSROOM","MLC","MLC","\u2014",18,193.68,"5.277 MTR (17'-4\") X 3.256 MTR (10'-8\")","\u2014","Axis","Area: 17.93 SQ MTR / 192.99 SQ FT"],[257,"1ST Floor",1,"Echo","CLASSROOM","MLC","MLC",115,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Echo","Area: 39.37 SQ MTR / 423.83 SQ FT"],[258,"1ST Floor",1,"Aether","CLASSROOM","MLC","MLC",114,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Aether","Area: 39.37 SQ MTR / 423.83 SQ FT"],[259,"1ST Floor",1,"Orion","CLASSROOM","MLC","MLC",113,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Orion","Area: 39.37 SQ MTR / 423.83 SQ FT"],[260,"1ST Floor",1,"Cosmos","CLASSROOM","MLC","MLC",112,77,828.52,"7.000 MTR (23'-0\") X 11.000 MTR (36'-1\")","\u2014","Cosmos","Area: 77.00 SQ MTR / 828.82 SQ FT"],[261,"1ST Floor",1,"Nimbus","CLASSROOM","MLC","MLC",111,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Nimbus","Area: 39.37 SQ MTR / 423.83 SQ FT"],[264,"1ST Floor",2,"Ardour","CLASSROOM","MYP",8,211,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Ardour","Area: 58.62 SQ MTR / 631.03 SQ FT"],[265,"1ST Floor",2,"Elan","CLASSROOM","MYP",8,212,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Elan","Area: 58.62 SQ MTR / 631.03 SQ FT"],[266,"1ST Floor",2,"Exuberance","CLASSROOM","MYP",8,213,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Exuberance","Area: 58.62 SQ MTR / 631.03 SQ FT"],[267,"1ST Floor",2,"Rhapsody","CLASSROOM","MYP",8,214,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Rhapsody","Area: 58.62 SQ MTR / 631.03 SQ FT"],[268,"1ST Floor",2,"Verve","CLASSROOM","MYP",8,215,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Verve","Area: 58.62 SQ MTR / 631.03 SQ FT"],[269,"1ST Floor",2,"Vivacity","CLASSROOM","MYP",8,216,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Vivacity","Area: 58.62 SQ MTR / 631.03 SQ FT"],[270,"1ST Floor",2,"Zest","CLASSROOM","MYP",8,217,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Zest","Area: 58.62 SQ MTR / 631.03 SQ FT"],[271,"1ST Floor",2,"Zing","CLASSROOM","MYP",8,218,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Zing","Area: 58.62 SQ MTR / 631.03 SQ FT"],[273,"1ST Floor",3,"Bits & Bytes Robotics Lab","LAB","\u2014","\u2014","\u2014",59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","ROBOTICS LAB","Bits & Bytes","Area: 58.80 SQ MTR / 632.91 SQ FT"],[274,"1ST Floor",3,"Senior Library","LIBRARY","\u2014","\u2014","\u2014",133,1431.08,"7.000 MTR (23'-0\") X 19.000 MTR (62'-4\")","\u2014","Senior Library","Area: 133.00 SQ MTR / 1431.60 SQ FT"],[275,"1ST Floor",3,"Study Hall","LIBRARY","\u2014","\u2014","\u2014",40,430.4,"7.000 MTR (23'-0\") X 5.750 MTR (18'-10\")","\u2014","Study Hall","Area: 40.25 SQ MTR / 433.25 SQ FT"],[276,"1ST Floor",3,"Junior Library","LIBRARY","\u2014","\u2014","\u2014",174,1872.24,"7.000 MTR (23'-0\") X 24.875 MTR (81'-7\")","\u2014","Junior Library","Area: 174.12 SQ MTR / 1874.26 SQ FT"],[277,"1ST Floor",3,"Reception Library","LIBRARY","\u2014","\u2014","\u2014",20,215.2,"7.000 MTR (23'-0\") X 5.501 MTR (18'-1\")","\u2014","Reception Library","Area: 20.13 SQ MTR / 216.62 SQ FT"],[278,"1ST Floor",3,"Library Room","LIBRARY","\u2014","\u2014","\u2014",36,387.36,"7.000 MTR (23'-0\") X 2.875 MTR (9'-5\")","\u2014","Library Room","Area: 35.75 SQ MTR / 384.81 SQ FT"],[280,"1ST Floor",4,"Acuity","CLASSROOM","MYP",7,411,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Acuity","Area: 58.63 SQ MTR / 631.03 SQ FT"],[281,"1ST Floor",4,"Acumen","CLASSROOM","MYP",7,412,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Acumen","Area: 58.63 SQ MTR / 631.03 SQ FT"],[282,"1ST Floor",4,"Cognizance","CLASSROOM","MYP",7,413,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Cognizance","Area: 58.63 SQ MTR / 631.03 SQ FT"],[283,"1ST Floor",4,"Envisage","CLASSROOM","MYP",7,414,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Envisage","Area: 58.63 SQ MTR / 631.03 SQ FT"],[284,"1ST Floor",4,"Idea","CLASSROOM","MYP",7,415,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Idea","Area: 58.63 SQ MTR / 631.03 SQ FT"],[285,"1ST Floor",4,"Insight","CLASSROOM","MYP",7,416,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Insight","Area: 58.63 SQ MTR / 631.03 SQ FT"],[286,"1ST Floor",4,"Perspicacity","CLASSROOM","MYP",7,417,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Perspicacity","Area: 58.63 SQ MTR / 631.03 SQ FT"],[287,"1ST Floor",4,"Vision","CLASSROOM","MYP",7,418,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Vision","Area: 58.63 SQ MTR / 631.03 SQ FT"],[290,"1ST Floor",5,"Symbiosis","CLASSROOM","PYP",5,511,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Symbiosis","Area: 58.62 SQ MTR / 631.02 SQ FT"],[291,"1ST Floor",5,"Alliance","CLASSROOM","PYP",5,512,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Alliance","Area: 58.62 SQ MTR / 631.02 SQ FT"],[292,"1ST Floor",5,"Coalition","CLASSROOM","PYP",5,513,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Coalition","Area: 58.62 SQ MTR / 631.02 SQ FT"],[293,"1ST Floor",5,"Reciprocity","CLASSROOM","PYP",5,514,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Reciprocity","Area: 58.62 SQ MTR / 631.02 SQ FT"],[294,"1ST Floor",5,"Consortium","CLASSROOM","PYP",5,515,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Consortium","Area: 58.62 SQ MTR / 631.02 SQ FT"],[295,"1ST Floor",5,"Synergy","CLASSROOM","PYP",5,516,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Synergy","Area: 58.62 SQ MTR / 631.02 SQ FT"],[296,"1ST Floor",5,"Collaboration","CLASSROOM","PYP",5,517,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Collaboration","Area: 58.62 SQ MTR / 631.02 SQ FT"],[297,"1ST Floor",5,"Conglomerate","CLASSROOM","PYP",5,518,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Conglomerate","Area: 58.62 SQ MTR / 631.02 SQ FT"],[300,"1ST Floor",6,"Contemplate","CLASSROOM","PYP",6,611,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Contemplate","Area: 58.63 SQ MTR / 631.03 SQ FT"],[301,"1ST Floor",6,"Evolve","CLASSROOM","PYP",6,612,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Evolve","Area: 58.63 SQ MTR / 631.03 SQ FT"],[302,"1ST Floor",6,"Progress","CLASSROOM","PYP",6,613,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Progress","Area: 58.63 SQ MTR / 631.03 SQ FT"],[303,"1ST Floor",6,"Conjecture","CLASSROOM","PYP",6,614,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Conjecture","Area: 58.63 SQ MTR / 631.03 SQ FT"],[304,"1ST Floor",6,"Deliberate","CLASSROOM","PYP",6,615,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Deliberate","Area: 58.63 SQ MTR / 631.03 SQ FT"],[305,"1ST Floor",6,"Enlighten","CLASSROOM","PYP",6,616,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Enlighten","Area: 58.63 SQ MTR / 631.03 SQ FT"],[306,"1ST Floor",6,"Ruminate","CLASSROOM","PYP",6,617,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Ruminate","Area: 58.63 SQ MTR / 631.03 SQ FT"],[307,"1ST Floor",6,"Excogitate","CLASSROOM","PYP",6,618,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Excogitate","Area: 58.63 SQ MTR / 631.03 SQ FT"],[309,"1ST Floor",6,"Staff Room","STAFF ROOM","\u2014","\u2014","\u2014",14,150.64,"4.875 MTR (16'-0\") X 2.832 MTR (9'-3\")","\u2014","Staff Room","Area: 13.74 SQ MTR / 147.93 SQ FT"],[310,"1ST Floor",6,"Staff Room","STAFF ROOM","\u2014","\u2014","\u2014",16,172.16,"4.894 MTR (16'-1\") X 3.158 MTR (10'-4\")","\u2014","Staff Room","Area: 15.66 SQ MTR / 168.53 SQ FT"],[311,"1ST Floor",6,"Gimnasio","PE","\u2014","\u2014","\u2014",308,3314.08,"9.250 MTR (30'-4\") X 33.252 MTR (109'-1\")","\u2014","Gimnasio","Area: 307.57 SQ MTR / 3310.68 SQ FT"],[320,"2ND Floor",1,"Crescendo Music Room","ARTS","\u2014","\u2014","\u2014",142,1527.92,"7.500 MTR (24'-7\") X 16.750 MTR (54'-11\")","Music Room","Crescendo","Area: 142.38 SQ MTR / 1532.51 SQ FT"],[322,"2ND Floor",1,"Toilet","TOILET","\u2014","\u2014","\u2014",30,322.8,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Toilet","Area: 29.75 SQ MTR / 320.23 SQ FT"],[323,"2ND Floor",1,"Toilet","TOILET","\u2014","\u2014","\u2014",30,322.8,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Toilet","Area: 29.75 SQ MTR / 320.23 SQ FT"],[324,"2ND Floor",2,"Raman Biology Lab","LAB","\u2014","\u2014","\u2014",60,645.6,"7.000 MTR (23'-0\") X 8.500 MTR (27'-11\")","Biology Lab","Raman","Area: 59.50 SQ MTR / 640.45 SQ FT"],[325,"2ND Floor",2,"The Junction Biology Lab","LAB","\u2014","\u2014","\u2014",65,699.4,"7.334 MTR (24'-1\") X 8.468 MTR (27'-9\")","Biology Lab","The Junction","Area: 64.65 SQ MTR / 695.84 SQ FT"],[326,"2ND Floor",2,"Life Biology Lab","LAB","\u2014","\u2014","\u2014",60,645.6,"7.000 MTR (23'-0\") X 8.500 MTR (27'-11\")","Biology Lab","Life","Area: 59.50 SQ MTR / 640.45 SQ FT"],[327,"2ND Floor",2,"\u2014","ADMIN","\u2014","\u2014","\u2014",25,269,"9.220 MTR (30'-3\") X 2.742 MTR (9'-0\")","\u2014","Staff Room","Area: 25.28 SQ MTR / 272.14 SQ FT"],[328,"2ND Floor",3,"Toilet","TOILET","\u2014","\u2014","\u2014",30,322.8,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Toilet","29.75 SQ MTR / 320.24 SQ FT"],[329,"2ND Floor",3,"Toilet","TOILET","\u2014","\u2014","\u2014",30,322.8,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Toilet","29.75 SQ MTR / 320.24 SQ FT"],[334,"2ND Floor",4,"Rangmanch Drama Room","ARTS","\u2014","\u2014","\u2014",60,645.6,"7.000 MTR (23'-0\") X 8.500 MTR (27'-11\")","Drama Room","Rangmanch","Area: 59.50 SQ MTR / 640.45 SQ FT"],[335,"2ND Floor",5,"Indradhanush Visual Arts","ARTS","\u2014","\u2014","\u2014",60,645.6,"7.000 MTR (23'-0\") X 8.500 MTR (27'-11\")","Visual Arts","Indradhanush","Area: 59.63 SQ MTR / 641.82 SQ FT"],[336,"2ND Floor",5,"Cubism Visual Arts","ARTS","\u2014","\u2014","\u2014",35,376.59999999999997,"4.520 MTR (14'-10\") X 8.455 MTR (27'-9\")","Visual Arts","Cubism","Area: 34.70 SQ MTR / 373.47 SQ FT"],[337,"2ND Floor",5,"Surrealism Room 1 Visual Arts","ARTS","\u2014","\u2014","\u2014",70,753.1999999999999,"8.195 MTR (26'-11\") X 8.500 MTR (27'-11\")","Visual Arts","Surrealism Room 1","Area: 69.65 SQ MTR / 749.75 SQ FT"],[338,"2ND Floor",5,"Impressionism Room 2 Visual Arts","ARTS","\u2014","\u2014","\u2014",71,763.96,"8.375 MTR (27'-6\") X 8.500 MTR (27'-11\")","Visual Arts","Impressionism Room 2","Area: 71.19 SQ MTR / 766.26 SQ FT"],[339,"2ND Floor",6,"Realism Room 3 Visual Arts","ARTS","\u2014","\u2014","\u2014",71,763.96,"8.375 MTR (27'-6\") X 8.500 MTR (27'-11\")","Visual Arts","Realism Room 3","Area: 71.19 SQ MTR / 766.26 SQ FT"],[340,"2ND Floor",6,"Carpe Diem Performing Arts","ARTS","\u2014","\u2014","\u2014",89,957.64,"10.199 MTR (33'-6\") X 8.500 MTR (27'-11\")","Performning Arts","Carpe Diem","Area: 89.16 SQ MTR / 959.69 SQ FT"],[342,"2ND Floor",6,"Toilet","TOILET","\u2014","\u2014","\u2014",29,312.04,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Block 6 Toilet","Area: 29.18 SQ MTR / 314.05 SQ FT"],[343,"2ND Floor",6,"Toilet","TOILET","\u2014","\u2014","\u2014",29,312.04,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Block 6 Toilet","Area: 29.18 SQ MTR / 314.05 SQ FT"],[345,"2ND Floor",6,"Valour","CLASSROOM","PYP",4,621,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Valour","Area: 58.63 SQ MTR / 631.03 SQ FT"],[346,"2ND Floor",6,"Mettle","CLASSROOM","PYP",4,622,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Mettle","Area: 58.63 SQ MTR / 631.03 SQ FT"],[347,"2ND Floor",6,"Resilience","CLASSROOM","PYP",4,623,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Resilience","Area: 58.63 SQ MTR / 631.03 SQ FT"],[348,"2ND Floor",6,"Freedom","CLASSROOM","PYP",4,624,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Freedom","Area: 58.63 SQ MTR / 631.03 SQ FT"],[349,"2ND Floor",6,"Tenacity","CLASSROOM","PYP",4,625,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Tenacity","Area: 58.63 SQ MTR / 631.03 SQ FT"],[350,"2ND Floor",6,"Courage","CLASSROOM","PYP",4,626,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Courage","Area: 58.63 SQ MTR / 631.03 SQ FT"],[351,"2ND Floor",6,"Responsibility","CLASSROOM","PYP",4,627,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Responsibility","Area: 58.63 SQ MTR / 631.03 SQ FT"],[352,"2ND Floor",6,"Fortitude","CLASSROOM","PYP",4,628,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Fortitude","Area: 58.63 SQ MTR / 631.03 SQ FT"],[167,"Ground Floor",4,"Staff Room","STAFF ROOM","PYP",2,"\u2014",18,193.68,"3.061 MTR (10'-1\") X 5.700 MTR (18'-8\")","\u2014","Staff Room","Area: 17.67 SQ MTR / 190.19 SQ FT"],[168,"Ground Floor",4,"Staff Room","STAFF ROOM","PYP",2,"\u2014",7,75.32,"2.300 MTR (7'-7\") X 3.010 MTR (9'-11\")","\u2014","Staff Room","Area: 6.92 SQ MTR / 74.53 SQ FT"],[356,"2ND Floor",5,"Imagine","CLASSROOM","PYP",3,521,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Imagine","Area: 58.62 SQ MTR / 631.03 SQ FT"],[357,"2ND Floor",5,"Illuminate","CLASSROOM","PYP",3,522,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Illuminate","Area: 58.62 SQ MTR / 631.03 SQ FT"],[358,"2ND Floor",5,"Inspire","CLASSROOM","PYP",3,523,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Inspire","Area: 58.62 SQ MTR / 631.03 SQ FT"],[359,"2ND Floor",5,"Imbue","CLASSROOM","PYP",3,524,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Imbue","Area: 58.62 SQ MTR / 631.03 SQ FT"],[360,"2ND Floor",5,"Innovate","CLASSROOM","PYP",3,525,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Innovate","Area: 58.62 SQ MTR / 631.03 SQ FT"],[361,"2ND Floor",5,"Initiate","CLASSROOM","PYP",3,526,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Initiate","Area: 58.62 SQ MTR / 631.03 SQ FT"],[362,"2ND Floor",5,"Illustrate","CLASSROOM","PYP",3,527,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Illustrate","Area: 58.62 SQ MTR / 631.03 SQ FT"],[363,"2ND Floor",5,"Ideate","CLASSROOM","PYP",3,528,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Ideate","Area: 58.62 SQ MTR / 631.03 SQ FT"],[263,"1ST Floor",2,"Staff Room","STAFF ROOM","MLC","MLC","\u2014",124,1334.24,"4.949 MTR (16'-3\") X 3.097 MTR (10'-2\")","\u2014","Staff Room","Area: 124.39 SQ MTR / 1338.96 SQ FT"],[289,"1ST Floor",4,"Staff Room","STAFF ROOM","MYP",7,"\u2014",35,376.59999999999997,"2.875 MTR (9'-5\") X 8.202 MTR (26'-11\")","\u2014","Staff Room","Area: 34.71 SQ MTR / 373.63 SQ FT"],[366,"2ND Floor",4,"Enigma","CLASSROOM","MYP",9,421,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Enigma","Area: 58.63 SQ MTR / 631.03 SQ FT"],[367,"2ND Floor",4,"Epiphany","CLASSROOM","MYP",9,422,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Epiphany","Area: 58.63 SQ MTR / 631.03 SQ FT"],[368,"2ND Floor",4,"Eureka","CLASSROOM","MYP",9,423,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Eureka","Area: 58.63 SQ MTR / 631.03 SQ FT"],[369,"2ND Floor",4,"Fortuity","CLASSROOM","MYP",9,424,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Fortuity","Area: 58.63 SQ MTR / 631.03 SQ FT"],[370,"2ND Floor",4,"Revelation","CLASSROOM","MYP",9,425,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Revelation","Area: 58.63 SQ MTR / 631.03 SQ FT"],[371,"2ND Floor",4,"Serendipity","CLASSROOM","MYP",9,426,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Serendipity","Area: 58.63 SQ MTR / 631.03 SQ FT"],[354,"2ND Floor",6,"Staff Room","STAFF ROOM","PYP",4,"\u2014",16,172.16,"4.875 MTR (16'-0\") X 2.832 MTR (9'-3\")","\u2014","Staff Room","Area: 15.74 SQ MTR / 169.39 SQ FT"],[355,"2ND Floor",6,"Staff Room","STAFF ROOM","PYP",4,"\u2014",14,150.64,"4.894 MTR (16'-1\") X 3.158 MTR (10'-4\")","\u2014","Staff Room","Area: 14.16 SQ MTR / 152.40 SQ FT"],[374,"2ND Floor",3,"Apotheosis","CLASSROOM","MYP",10,321,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Apotheosis","Area: 58.63 SQ MTR / 631.03 SQ FT"],[375,"2ND Floor",3,"Embodiment","CLASSROOM","MYP",10,322,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Embodiment","Area: 58.63 SQ MTR / 631.03 SQ FT"],[376,"2ND Floor",3,"Harbinger","CLASSROOM","MYP",10,323,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Harbinger","Area: 58.63 SQ MTR / 631.03 SQ FT"],[377,"2ND Floor",3,"Herald","CLASSROOM","MYP",10,324,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Herald","Area: 58.63 SQ MTR / 631.03 SQ FT"],[378,"2ND Floor",3,"Nonpareil","CLASSROOM","MYP",10,325,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Nonpareil","Area: 58.63 SQ MTR / 631.03 SQ FT"],[379,"2ND Floor",3,"Quintessence","CLASSROOM","MYP",10,326,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Quintessence","Area: 58.63 SQ MTR / 631.03 SQ FT"],[380,"2ND Floor",3,"Vanguard","CLASSROOM","MYP",10,327,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Vanguard","Area: 58.63 SQ MTR / 631.03 SQ FT"],[365,"2ND Floor",5,"Staff Room","STAFF ROOM","PYP",3,"\u2014",12,129.12,"4.250 MTR (13'-11\") X 3.021 MTR (9'-11\")","\u2014","Staff Room","Area: 11.56 SQ MTR / 124.45 SQ FT"],[382,"2ND Floor",3,"\u2014","CLASSROOM","MYP",10,"\u2014",59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Extra Room","Area: 58.63 SQ MTR / 631.03 SQ FT"],[372,"2ND Floor",4,"Staff Room","STAFF ROOM","MYP",9,"\u2014",34,365.84,"3.001 MTR (9'-10\") X 8.029 MTR (26'-4\")","\u2014","Staff Room","Area: 33.73 SQ MTR / 363.09 SQ FT"],[384,"2ND Floor",2,"Invigorate","CLASSROOM","DP","DP Wing 2",2201,49,527.24,"7.000 MTR (23'-0\") X 7.000 MTR (23'-0\")","\u2014","Invigorate","Area: 49.00 SQ MTR / 527.43 SQ FT"],[385,"2ND Floor",2,"Profundity","CLASSROOM","DP","DP Wing 2",2202,49,527.24,"7.000 MTR (23'-0\") X 7.000 MTR (23'-0\")","\u2014","Profundity","Area: 49.00 SQ MTR / 527.43 SQ FT"],[386,"2ND Floor",2,"The Study Stack","CLASSROOM","DP","DP Wing 2",2203,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","The Study Stack","Area: 38.50 SQ MTR / 414.41 SQ FT"],[387,"2ND Floor",2,"Provenance","CLASSROOM","DP","DP Wing 2",2204,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Provenance","Area: 57.75 SQ MTR / 621.62 SQ FT"],[388,"2ND Floor",2,"Sapience","CLASSROOM","DP","DP Wing 2",2205,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Sapience","Area: 39.38 SQ MTR / 423.83 SQ FT"],[389,"2ND Floor",2,"Prudence","CLASSROOM","DP","DP Wing 2",2211,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Prudence","Area: 58.62 SQ MTR / 631.03 SQ FT"],[390,"2ND Floor",2,"Sagacity","CLASSROOM","DP","DP Wing 2",2210,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Sagacity","Area: 38.50 SQ MTR / 414.41 SQ FT"],[391,"2ND Floor",2,"Locus","CLASSROOM","DP","DP Wing 2",2209,29,312.04,"7.000 MTR (23'-0\") X 4.125 MTR (13'-6\")","\u2014","Locus","Area: 28.87 SQ MTR / 310.80 SQ FT"],[392,"2ND Floor",2,"Pansophy","CLASSROOM","DP","DP Wing 2",2208,29,312.04,"7.000 MTR (23'-0\") X 4.125 MTR (13'-6\")","\u2014","Pansophy","Area: 28.87 SQ MTR / 310.77 SQ FT"],[393,"2ND Floor",2,"The Launchpad","CLASSROOM","DP","DP Wing 2",2207,19,204.44,"4.759 MTR (15'-7\") X 2.750 MTR (9'-0\")","\u2014","The Launchpad","Area: 19.25 SQ MTR / 207.21 SQ FT"],[394,"2ND Floor",2,"The Capital","CLASSROOM","DP","DP Wing 2",2206,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","The Capital","Area: 39.38 SQ MTR / 423.83 SQ FT"],[299,"1ST Floor",5,"Staff Room","STAFF ROOM","PYP",5,"\u2014",11,118.36,"3.951 MTR (13'-0\") X 2.908 MTR (9'-6\")","\u2014","Staff Room","Area: 11.31 SQ MTR / 121.73 SQ FT"],[396,"2ND Floor",1,"The Den","CLASSROOM","DP","DP Wing 1",1202,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","The Den","Area: 39.38 SQ MTR / 423.83 SQ FT"],[397,"2ND Floor",1,"The Nook","CLASSROOM","DP","DP Wing 1","\u2014",19,204.44,"4.576 MTR (15'-0\") X 2.750 MTR (9'-0\")","\u2014","The Nook","Area: 19.25 SQ MTR / 207.21 SQ FT"],[398,"2ND Floor",1,"Equipoise","CLASSROOM","DP","DP Wing 1",1201,39,419.64,"7.013 MTR (23'-0\") X 5.500 MTR (18'-1\")","\u2014","Equipoise","Area: 38.50 SQ MTR / 414.41 SQ FT"],[399,"2ND Floor",1,"Poise","CLASSROOM","DP","DP Wing 1",1204,58,624.08,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Poise","Area: 57.75 SQ MTR / 621.62 SQ FT"],[400,"2ND Floor",1,"The Nest","CLASSROOM","DP","DP Wing 1","1205 A",10,107.6,"3.500 MTR (11'-6\") X 2.746 MTR (9'-0\")","\u2014","The Nest","Area: 9.63 SQ MTR / 103.60 SQ FT"],[401,"2ND Floor",1,"The Hive","CLASSROOM","DP","DP Wing 1","1205 B",10,107.6,"3.500 MTR (11'-6\") X 2.746 MTR (9'-0\")","\u2014","The Hive","Area: 9.63 SQ MTR / 103.60 SQ FT"],[402,"2ND Floor",1,"Equilibrium","CLASSROOM","DP","DP Wing 1",1206,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Equilibrium","Area: 58.63 SQ MTR / 631.03 SQ FT"],[403,"2ND Floor",1,"Equanimity","CLASSROOM","DP","DP Wing 1",1211,59,634.84,"7.000 MTR (23'-0\") X 8.251 MTR (27'-1\")","\u2014","Equanimity","Area: 58.63 SQ MTR / 631.03 SQ FT"],[404,"2ND Floor",1,"Sangfroid","CLASSROOM","DP","DP Wing 1",1210,77,828.52,"6.000 MTR (19'-8\") X 11.000 MTR (36'-1\")","\u2014","Sangfroid","Area: 77.00 SQ MTR / 828.82 SQ FT"],[405,"2ND Floor",1,"Aplomb","CLASSROOM","DP","DP Wing 1",1208,48,516.48,"7.000 MTR (23'-0\") X 6.875 MTR (22'-7\")","\u2014","Aplomb","Area: 48.12 SQ MTR / 518.01 SQ FT"],[406,"2ND Floor",1,"Erudite","CLASSROOM","DP","DP Wing 1",1209,48,516.48,"7.000 MTR (23'-0\") X 6.875 MTR (22'-7\")","\u2014","Erudite","Area: 48.12 SQ MTR / 518.01 SQ FT"],[408,"3RD Floor",5,"Indoor Sports","PE","\u2014","\u2014","\u2014",118,1269.68,"14.463 MTR (47'-5\") X 8.500 MTR (27'-11\")","\u2014","Indoor Sports","Area: 117.59 SQ MTR / 1265.70 SQ FT"],[409,"3RD Floor",6,"Yoga Room","PE","\u2014","\u2014","\u2014",94,1011.4399999999999,"11.000 MTR (36'-1\") X 8.499 MTR (27'-11\")","\u2014","Yoga Room","Area: 93.50 SQ MTR / 1006.39 SQ FT"],[410,"3RD Floor",6,"Tt Room","PE","\u2014","\u2014","\u2014",185,1990.6,"21.832 MTR (71'-8\") X 8.500 MTR (27'-11\")","\u2014","Tt Room","Area: 184.99 SQ MTR / 1991.19 SQ FT"],[411,"3RD Floor",6,"Toilet","TOILET","\u2014","\u2014","\u2014",31,333.56,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Toilet","Area: 30.67 SQ MTR / 330.18 SQ FT"],[412,"3RD Floor",6,"Toilet","TOILET","\u2014","\u2014","\u2014",31,333.56,"7.000 MTR (23'-0\") X 4.250 MTR (13'-11\")","\u2014","Toilet","Area: 30.67 SQ MTR / 330.18 SQ FT"]];
+const categoryColors={'ACADEMIC':'#1565c0','ACADAMIC':'#1565c0','ADMIN':'#f57f17','AMPHITHEATRE':'#c62828','ARTS':'#6a1b9a','ASSEMBLY':'#0277bd','ATRIUM':'#00695c','AUDITORIUM':'#b71c1c','CIRCULATION':'#546e7a','HEALTH':'#2e7d32','HOS':'#e65100','KITCHEN':'#f9a825','LAB':'#01579b','LANDSCAPE':'#1b5e20','LIFT':'#616161','MEETING ROOM':'#f57f17','MULTI USE HALL':'#880e4f','OTS':'#0d47a1','PARKING':'#455a64','SPORTS':'#33691e','TERRACE':'#006064','TOILET':'#ad1457','UTILITY':'#e65100','CLASSROOM':'#1565c0','LIBRARY':'#01579b','STORE':'#4e342e','CAFETERIA':'#e65100','RECEPTION':'#0277bd','STAIRCASE':'#546e7a','RAMP':'#546e7a','PASSAGE':'#546e7a','CORRIDOR':'#546e7a'};
+const bgColors={'ACADEMIC':'#e8f4fd','ACADAMIC':'#e8f4fd','ADMIN':'#fef9e7','AMPHITHEATRE':'#f9ebea','ARTS':'#f4ecf7','ASSEMBLY':'#eaf4fb','ATRIUM':'#e8f8f5','AUDITORIUM':'#fdedec','CIRCULATION':'#f0f3f4','HEALTH':'#eafaf1','HOS':'#fef5e7','KITCHEN':'#fef9e7','LAB':'#eaf4fb','LANDSCAPE':'#e9f7ef','LIFT':'#f2f3f4','MEETING ROOM':'#fffde7','MULTI USE HALL':'#fce4ec','OTS':'#e3f2fd','PARKING':'#eceff1','SPORTS':'#e8f5e9','TERRACE':'#e0f7fa','TOILET':'#fce4ec','UTILITY':'#fff3e0','CLASSROOM':'#e8f4fd','LIBRARY':'#eaf4fb','STORE':'#efebe9','CAFETERIA':'#fef5e7','RECEPTION':'#eaf4fb','STAIRCASE':'#f0f3f4','RAMP':'#f0f3f4','PASSAGE':'#f0f3f4','CORRIDOR':'#f0f3f4'};
+Object.assign(categoryColors,{'CONFERENCE ROOM':'#f57f17','PE':'#33691e','FOOD':'#e65100','STAFF ROOM':'#7c3aed','CORRIODR':'#546e7a','MEDICAL FACILITIES':'#2e7d32','DAY CARE':'#7c3aed'});
+Object.assign(bgColors,{'CONFERENCE ROOM':'#fffde7','PE':'#e8f5e9','FOOD':'#fef5e7','STAFF ROOM':'#f3e8ff','CORRIODR':'#f0f3f4','MEDICAL FACILITIES':'#eafaf1','DAY CARE':'#f3e8ff'});
+const categoryIcons={'CONFERENCE ROOM':'\u{1F91D}','ACADEMIC':'📚','ACADAMIC':'📚','CLASSROOM':'📚','ADMIN':'🗂️','AMPHITHEATRE':'🎭','ARTS':'🎨','ASSEMBLY':'👥','ATRIUM':'🏛️','AUDITORIUM':'🎤','CIRCULATION':'🚶','HEALTH':'🩺','HOS':'🏥','KITCHEN':'🍳','LAB':'🧪','LANDSCAPE':'🌿','LIFT':'🛗','MEETING ROOM':'🤝','MULTI USE HALL':'🎪','OTS':'🌤️','PARKING':'🅿️','SPORTS':'🏀','PE':'🏃','TERRACE':'🌤️','TOILET':'🚻','UTILITY':'🔧','LIBRARY':'📖','STORE':'📦','CAFETERIA':'🍽️','FOOD':'🍽️','RECEPTION':'🛎️','STAIRCASE':'🪜','RAMP':'♿','PASSAGE':'🚶','CORRIDOR':'🚶','STAFF ROOM':'🧑‍🏫','MEDICAL FACILITIES':'🩺','DAY CARE':'🧸','CORRIODR':'🚶'};
+function categoryIcon(category){return categoryIcons[String(category??'').trim().toUpperCase()]||'🏷️';}
+
+let allItems=[],selectedSet=new Set(),selectedCategories=new Set(),selectedSubcategories=new Set(),currentOrder=[],sortCol=-1,sortDir=0,activeFilterName='',activeFilterAnchor=null;
+const selectedFilters={floor:new Set(),block:new Set(),grade:new Set(),programme:new Set()};
+const tbody=document.getElementById('tableBody'),cardsCont=document.getElementById('cardsContainer');
+
+// Filters
+const floors=[...new Set(data.map(r=>r[1]).filter(Boolean))];
+const cats=[...new Set(data.map(r=>String(r[4]??'').trim()).filter(Boolean))].sort();
+const subcats=[...new Set(data.map(r=>String(r[11]??'—').trim()||'—'))].sort((a,b)=>a.localeCompare(b));
+const floorOrder={'Ground Floor':0,'First Floor':1,'1ST Floor':1,'Second Floor':2,'2ND Floor':2,'Third Floor':3,'3RD Floor':3,'Fourth Floor':4,'4TH Floor':4,'Terrace':99};
+floors.sort((a,b)=>(floorOrder[a]??50)-(floorOrder[b]??50));
+const filterGroups={
+  floor:{label:'Floors',button:null,header:'headerFloorFilter',values:floors,display:value=>value},
+  block:{label:'Blocks',button:null,header:'headerBlockFilter',values:[...new Set(data.map(r=>String(r[2]??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})),display:value=>'Block '+value},
+  grade:{label:'Grades',button:null,header:'headerGradeFilter',values:[...new Set(data.map(r=>String(r[6]??'').trim()).filter(v=>v&&v!=='—'))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})),display:value=>value},
+  programme:{label:'Programmes',button:null,header:'headerProgrammeFilter',values:[...new Set(data.map(r=>String(r[5]??'').trim()).filter(v=>v&&v!=='—'))].sort(),display:value=>value}
+};
+const categoryOptions=document.getElementById('categoryOptions');
+cats.forEach(category=>{
+  const label=document.createElement('label');label.className='category-option';
+  const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=category;checkbox.addEventListener('change',()=>{
+    checkbox.checked?selectedCategories.add(category):selectedCategories.delete(category);
+    updateCategoryFilterLabel();filterAll();
+  });
+  const icon=document.createElement('span');icon.className='category-option-icon';icon.setAttribute('aria-hidden','true');icon.textContent=categoryIcon(category);
+  const text=document.createElement('span');text.textContent=category;
+  label.append(checkbox,icon,text);categoryOptions.appendChild(label);
+});
+const subcategoryOptions=document.getElementById('subcategoryOptions');
+subcats.forEach(subcategory=>{
+  const label=document.createElement('label');label.className='category-option';
+  const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=subcategory;checkbox.addEventListener('change',()=>{
+    checkbox.checked?selectedSubcategories.add(subcategory):selectedSubcategories.delete(subcategory);
+    updateSubcategoryFilterLabel();filterAll();
+  });
+  const text=document.createElement('span');text.textContent=subcategory==='—'?'No subcategory':subcategory;
+  label.append(checkbox,text);subcategoryOptions.appendChild(label);
+});
+updateMultiFilterLabels();
+
+function formatArea(value){return Number(value||0).toLocaleString('en-IN',{maximumFractionDigits:0});}
+
+data.forEach((rec,idx)=>{
+  const [sr,floor,block,space,cat,prog,grade,sect,mtr,ft,dims,subcat,spaceInfo,areaExact]=rec;
+  const color=categoryColors[cat]||'#607d8b',bg=bgColors[cat]||'#f5f5f5';
+  const mtrN=parseFloat(mtr)||0,ftN=parseFloat(ft)||0;
+  const mtrS=formatArea(mtrN),ftS=formatArea(ftN);
+  const dimsS=(!dims||dims==='#N/A')?'':dims,dash='—';
+
+  // TABLE ROW
+  const tr=document.createElement('tr');
+  tr.style.background=bg+'55';
+  tr.innerHTML=`<td class="td-cb"><input type="checkbox" onchange="toggleRow(${idx},this)"></td><td class="td-name">${space||dash}</td><td><span class="cat-badge" style="background:${bg};color:${color}"><span class="cat-badge-icon" aria-hidden="true">${categoryIcon(cat)}</span>${cat}</span></td><td class="td-area-exact">${areaExact||dash}</td><td class="td-num">${mtrS}</td><td class="td-num">${ftS}</td><td class="td-dims">${dimsS||dash}</td><td class="td-floor">${floor||dash}</td><td class="td-block">${block||dash}</td><td class="td-muted">${grade||dash}</td><td class="td-muted">${sect||dash}</td><td class="td-muted">${(prog&&prog!=='—')?prog:dash}</td>`;
+  tr.cells[6].title=dimsS||dash;
+  tr.addEventListener('click',(e)=>{if(e.target.type==='checkbox')return;const cb=tr.querySelector('input');cb.checked=!cb.checked;toggleRow(idx,cb);});
+  tr.addEventListener('dblclick',(e)=>{e.preventDefault();openPlan(idx);});
+  tbody.appendChild(tr);
+
+  // MOBILE CARD
+  const card=document.createElement('div');card.className='card';
+  const abar=document.createElement('div');abar.className='card-accent-bar';abar.style.background=color;
+  const body=document.createElement('div');body.className='card-body';
+  const meta=[];
+  if(floor)meta.push(`<span>📍 ${floor}</span>`);
+  if(block)meta.push(`<span>🏢 Block ${block}</span>`);
+  if(prog&&prog!=='—')meta.push(`<span>📚 ${prog}</span>`);
+  if(grade&&grade!=='—')meta.push(`<span>🎓 ${grade}</span>`);
+  body.innerHTML=`<div class="card-top"><div class="card-name">${space||dash}</div><div class="card-sr">#${sr}</div></div>${spaceInfo&&spaceInfo!=='—'?`<div class="card-meta">Space info: ${spaceInfo}</div>`:''}<div class="card-badge" style="background:${bg};color:${color}"><span class="cat-badge-icon" aria-hidden="true">${categoryIcon(cat)}</span>${cat}</div>${subcat&&subcat!=='—'?`<div class="card-badge" style="background:#edf4ff;color:#1e4d8c">${subcat}</div>`:''}<div class="card-meta">${meta.join('')}</div><div class="card-areas"><span class="area-chip">${mtrS} m²</span><span class="area-chip">${ftS} ft²</span></div>${dimsS?`<div class="card-dims">📏 ${dimsS}</div>`:''}<button class="card-plan-btn" type="button" onclick="event.stopPropagation();openPlan(${idx})">View on layout plan</button>`;
+  const cbw=document.createElement('div');cbw.className='card-checkbox';
+  const cb2=document.createElement('input');cb2.type='checkbox';
+  cb2.addEventListener('change',(e)=>{e.stopPropagation();toggleCard(idx,card,cb2);});
+  cbw.appendChild(cb2);card.appendChild(abar);card.appendChild(body);card.appendChild(cbw);
+  card.addEventListener('click',(e)=>{if(e.target===cb2)return;cb2.checked=!cb2.checked;toggleCard(idx,card,cb2);});
+  cardsCont.appendChild(card);
+
+  allItems.push({tr,card,cb2,mtr:mtrN,ft:ftN,floor,block,space,spaceInfo:String(spaceInfo??'').trim(),cat:String(cat).trim(),subcat:String(subcat??'').trim(),prog:String(prog??'').trim(),grade,sect,sr,idx});
+  currentOrder.push(idx);
+});
+filterAll();
+
+function sortBy(col,type){
+  document.querySelectorAll('.sort-arrow').forEach(a=>{a.textContent='↕';a.className='sort-arrow';});
+  if(sortCol===col){sortDir=sortDir===1?2:sortDir===2?0:1;}else{sortCol=col;sortDir=1;}
+  const sa=document.getElementById('sa'+col);
+  if(sortDir===0){currentOrder=allItems.map((_,i)=>i);}
+  else{
+    if(sa){sa.textContent=sortDir===1?'↑':'↓';sa.className='sort-arrow '+(sortDir===1?'asc':'desc');}
+    currentOrder.sort((a,b)=>{
+      const ra=data[a],rb=data[b];
+      const di=col;
+      let va=ra[di]??'',vb=rb[di]??'';
+      if(type==='num'){return sortDir===1?((parseFloat(va)||0)-(parseFloat(vb)||0)):((parseFloat(vb)||0)-(parseFloat(va)||0));}
+      return sortDir===1?String(va).toLowerCase().localeCompare(String(vb).toLowerCase()):String(vb).toLowerCase().localeCompare(String(va).toLowerCase());
+    });
+  }
+  currentOrder.forEach(idx=>tbody.appendChild(allItems[idx].tr));
+  filterAll();
+}
+
+function filterAll(){
+  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  let vis=0;
+  allItems.forEach(({tr,card,space,spaceInfo,floor,cat:c,subcat,prog,grade,sect,sr,block})=>{
+    const txt=[space,spaceInfo,floor,block,c,subcat,prog,grade,sect,sr].join(' ').toLowerCase();
+    const show=(!q||txt.includes(q))&&(!selectedFilters.floor.size||selectedFilters.floor.has(floor))&&(!selectedCategories.size||selectedCategories.has(c))&&(!selectedSubcategories.size||selectedSubcategories.has(subcat||'—'))&&(!selectedFilters.block.size||selectedFilters.block.has(String(block).trim()))&&(!selectedFilters.grade.size||selectedFilters.grade.has(String(grade??'').trim()))&&(!selectedFilters.programme.size||selectedFilters.programme.has(prog));
+    tr.style.display=show?'':'none';card.style.display=show?'':'none';
+    if(show)vis++;
+  });
+  document.getElementById('countLabel').textContent=vis+' visible';
+  document.getElementById('noResultsD').classList.toggle('show',vis===0);
+  document.getElementById('noResultsM').classList.toggle('show',vis===0);
+  document.getElementById('selectAll').checked=false;
+  updateMultiFilterLabels();
+  updateTotals();
+}
+
+function toggleCategoryMenu(event,button){
+  if(event)event.stopPropagation();
+  const menu=document.getElementById('categoryFilterMenu');
+  const open=menu.hidden;
+  if(open){document.getElementById('multiFilterMenu').hidden=true;activeFilterName='';}
+  if(open)document.getElementById('subcategoryFilterMenu').hidden=true;
+  menu.hidden=!open;
+  if(open)positionFilterMenu(menu,button);
+}
+document.addEventListener('click',event=>{
+  if(event.target.closest('#categoryFilterMenu, #subcategoryFilterMenu, #multiFilterMenu, #headerFloorFilter, #headerBlockFilter, #headerGradeFilter, #headerProgrammeFilter, #headerCategoryFilter, #headerSubcategoryFilter'))return;
+  const multiMenu=document.getElementById('multiFilterMenu');
+  if(!multiMenu.hidden){multiMenu.hidden=true;activeFilterName='';}
+  ['categoryFilterMenu','subcategoryFilterMenu'].forEach(menuId=>{
+    const menu=document.getElementById(menuId);
+    if(menu&&!menu.hidden)menu.hidden=true;
+  });
+});
+function updateCategoryFilterLabel(){
+  document.getElementById('headerCategoryFilter').classList.toggle('active',selectedCategories.size>0);
+  document.querySelectorAll('#categoryOptions input').forEach(input=>{input.checked=selectedCategories.has(input.value);});
+}
+function selectAllCategories(){selectedCategories=new Set(cats);updateCategoryFilterLabel();filterAll();}
+function clearCategorySelection(){selectedCategories.clear();updateCategoryFilterLabel();filterAll();}
+function toggleSubcategoryMenu(event,button){
+  if(event)event.stopPropagation();
+  const menu=document.getElementById('subcategoryFilterMenu');
+  const open=menu.hidden;
+  if(open){document.getElementById('multiFilterMenu').hidden=true;activeFilterName='';}
+  if(open)document.getElementById('categoryFilterMenu').hidden=true;
+  menu.hidden=!open;
+  if(open)positionFilterMenu(menu,button);
+}
+function updateSubcategoryFilterLabel(){
+  const button=document.getElementById('headerSubcategoryFilter');
+  button.classList.toggle('active',selectedSubcategories.size>0);
+  button.textContent=selectedSubcategories.size?`Subcategories (${selectedSubcategories.size}) ▾`:'All Subcategories ▾';
+  document.querySelectorAll('#subcategoryOptions input').forEach(input=>{input.checked=selectedSubcategories.has(input.value);});
+}
+function selectAllSubcategories(){selectedSubcategories=new Set(subcats);updateSubcategoryFilterLabel();filterAll();}
+function clearSubcategorySelection(){selectedSubcategories.clear();updateSubcategoryFilterLabel();filterAll();}
+
+function openMultiFilter(name,button,event){
+  if(event)event.stopPropagation();
+  activeFilterName=name;activeFilterAnchor=button;
+  document.getElementById('categoryFilterMenu').hidden=true;
+  document.getElementById('subcategoryFilterMenu').hidden=true;
+  const group=filterGroups[name],menu=document.getElementById('multiFilterMenu'),options=document.getElementById('multiFilterOptions');
+  options.replaceChildren();
+  group.values.forEach(value=>{
+    const label=document.createElement('label');label.className='multi-filter-option';
+    const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=value;checkbox.checked=selectedFilters[name].has(value);
+    checkbox.addEventListener('change',()=>{
+      checkbox.checked?selectedFilters[name].add(value):selectedFilters[name].delete(value);
+      filterAll();
+    });
+    const text=document.createElement('span');text.textContent=group.display(value);
+    label.append(checkbox,text);options.appendChild(label);
+  });
+  menu.hidden=false;
+  positionFilterMenu(menu,button);
+}
+function positionFilterMenu(menu,button){
+  const anchor=button.getBoundingClientRect(),menuHeight=menu.offsetHeight,menuWidth=menu.offsetWidth;
+  const top=anchor.bottom+menuHeight+8<=window.innerHeight?anchor.bottom+4:Math.max(8,anchor.top-menuHeight-4);
+  const left=Math.max(8,Math.min(anchor.left,window.innerWidth-menuWidth-8));
+  menu.style.top=top+'px';menu.style.left=left+'px';
+}
+function updateMultiFilterLabels(){
+  Object.entries(filterGroups).forEach(([name,group])=>{
+    const count=selectedFilters[name].size;
+    if(group.button)document.getElementById(group.button).textContent=count?`${group.label} (${count}) ▾`:`All ${group.label} ▾`;
+    document.getElementById(group.header).classList.toggle('active',count>0);
+  });
+}
+function selectAllActiveFilter(){
+  if(!activeFilterName)return;
+  selectedFilters[activeFilterName]=new Set(filterGroups[activeFilterName].values);
+  filterAll();openMultiFilter(activeFilterName,activeFilterAnchor);
+}
+function clearActiveFilter(){
+  if(!activeFilterName)return;
+  selectedFilters[activeFilterName].clear();
+  filterAll();openMultiFilter(activeFilterName,activeFilterAnchor);
+}
+
+function updateTotals(){
+  let m=0,f=0,count=0;
+  allItems.forEach(({tr,mtr,ft})=>{if(tr.style.display!=='none'){m+=mtr;f+=ft;count++;}});
+  document.getElementById('totalMtr').textContent=formatArea(m);
+  document.getElementById('totalFt').textContent=formatArea(f);
+  const selectedVisible=allItems.filter(i=>i.tr.style.display!=='none'&&selectedSet.has(i.idx)).length;
+  const allVisibleSelected=count>0&&selectedVisible===count;
+  const partlyVisibleSelected=selectedVisible>0&&selectedVisible<count;
+  const selectVisibleToggle=document.getElementById('selectVisibleToggle');
+  selectVisibleToggle.checked=allVisibleSelected;
+  selectVisibleToggle.indeterminate=partlyVisibleSelected;
+  document.getElementById('selectAll').checked=allVisibleSelected;
+  document.getElementById('selectAll').indeterminate=partlyVisibleSelected;
+}
+
+function openSelectedChart(){
+  if(!selectedSet.size)return;
+  const dialog=document.getElementById('selectedChartDialog');
+  const body=document.getElementById('pieDialogBody');
+  const entries=[...selectedSet].map(idx=>allItems[idx]).map(item=>({
+    item,
+    area:item.mtr,
+    name:item.space||'Unnamed space',
+    details:[item.floor,item.block?'Block '+item.block:'',item.cat].filter(Boolean).join(' · ')
+  })).sort((a,b)=>b.area-a.area);
+  const totalArea=entries.reduce((sum,entry)=>sum+entry.area,0);
+  document.getElementById('pieDialogSubtitle').textContent=selectedSet.size+' selected space'+(selectedSet.size===1?'':'s')+' · '+formatArea(totalArea)+' m² combined area';
+  body.replaceChildren();
+  if(!entries.length){
+    const empty=document.createElement('div');
+    empty.className='pie-empty';
+    empty.textContent='Select one or more spaces to view the chart.';
+    body.appendChild(empty);
+    return;
+  }
+  const colors=['#2563eb','#db2777','#059669','#d97706','#7c3aed','#0891b2','#dc2626','#65a30d','#9333ea','#0f766e','#ea580c','#4f46e5'];
+  let start=0;
+  const stops=[];
+  entries.forEach((entry,index)=>{
+    const end=start+(totalArea>0?entry.area/totalArea*100:0);
+    entry.color=colors[index%colors.length];
+    stops.push(entry.color+' '+start.toFixed(2)+'% '+end.toFixed(2)+'%');
+    start=end;
+  });
+  const pie=document.createElement('div');pie.className='pie-chart';pie.style.background='conic-gradient('+stops.join(',')+')';
+  const center=document.createElement('div');center.className='pie-center';center.innerHTML='<strong>100%</strong><span>Selected total</span>';pie.appendChild(center);
+  const legend=document.createElement('div');legend.className='pie-legend';
+  entries.forEach(({name,details,area,color})=>{
+    const row=document.createElement('div');row.className='pie-legend-row';
+    const swatch=document.createElement('span');swatch.className='pie-swatch';swatch.style.background=color;
+    const label=document.createElement('span');label.className='pie-label';label.textContent=name;label.title=name+' · '+details;
+    const value=document.createElement('span');value.className='pie-value';value.textContent=formatArea(area)+' m²';
+    const percent=document.createElement('span');percent.className='pie-percent';percent.textContent=(totalArea>0?area/totalArea*100:0).toFixed(1)+'%';
+    row.append(swatch,label,value,percent);legend.appendChild(row);
+  });
+  body.append(pie,legend);
+  dialog.showModal();
+}
+function closeSelectedChart(){document.getElementById('selectedChartDialog').close();}
+function toggleRow(idx,cb){const{tr,card,cb2}=allItems[idx];cb2.checked=cb.checked;card.classList.toggle('selected',cb.checked);if(cb.checked){selectedSet.add(idx);tr.classList.add('selected');}else{selectedSet.delete(idx);tr.classList.remove('selected');}updateBar();}
+function toggleCard(idx,card,cb){const{tr}=allItems[idx];tr.querySelector('input[type=checkbox]').checked=cb.checked;tr.classList.toggle('selected',cb.checked);if(cb.checked){selectedSet.add(idx);card.classList.add('selected');}else{selectedSet.delete(idx);card.classList.remove('selected');}updateBar();}
+function setVisibleSelection(shouldSelect){const visible=allItems.filter(i=>i.tr.style.display!=='none');visible.forEach(({tr,card,cb2,idx})=>{const cb=tr.querySelector('input[type=checkbox]');cb.checked=shouldSelect;cb2.checked=shouldSelect;tr.classList.toggle('selected',shouldSelect);card.classList.toggle('selected',shouldSelect);shouldSelect?selectedSet.add(idx):selectedSet.delete(idx);});updateBar();updateTotals();}
+function toggleAll(m){setVisibleSelection(m.checked);}
+function selectVisible(){const visible=allItems.filter(i=>i.tr.style.display!=='none');setVisibleSelection(!visible.length||!visible.every(i=>selectedSet.has(i.idx)));}
+function updateBar(){const c=selectedSet.size;let m=0,f=0;selectedSet.forEach(i=>{m+=allItems[i].mtr;f+=allItems[i].ft;});document.getElementById('selectedTotalLabel').textContent=`SELECTED AREA TOTAL (${c} SPACE${c!==1?'S':''}) →`;document.getElementById('selectedTotalMtr').textContent=formatArea(m);document.getElementById('selectedTotalFt').textContent=formatArea(f);const chartBtn=document.getElementById('selectedChartBtn');chartBtn.disabled=!c;chartBtn.title=c?'View area chart for selected spaces':'Select spaces to view their chart';}
+function clearSelection(){
+  selectedSet.clear();
+  allItems.forEach(({tr,card,cb2})=>{
+    tr.querySelector('input[type="checkbox"]').checked=false;
+    cb2.checked=false;
+    tr.classList.remove('selected');
+    card.classList.remove('selected');
+  });
+  document.getElementById('selectAll').checked=false;
+  updateBar();
+}
+function clearAll(){document.getElementById('searchInput').value='';selectedFilters.floor.clear();selectedFilters.block.clear();selectedFilters.grade.clear();selectedFilters.programme.clear();selectedCategories.clear();selectedSubcategories.clear();updateMultiFilterLabels();updateCategoryFilterLabel();updateSubcategoryFilterLabel();document.getElementById('multiFilterMenu').hidden=true;activeFilterName='';clearSelection();filterAll();}
+function openPlan(idx){window.open('plan.html?sr='+encodeURIComponent(data[idx][0]),'_blank','noopener');}
+</script>
+<script src="../../../school-space-nav.js" data-school="FSK"></script></body>
+</html>

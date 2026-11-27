@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17243b">
+  <title>FALH Data Register</title>
+  <style>
+    :root { color-scheme: light; --navy:#17243b; --blue:#2457a6; --blue-pale:#eaf1fb; --ink:#1e293b; --muted:#68778d; --line:#e2e8f0; --paper:#f1f4f8; --white:#fff; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:var(--paper); color:var(--ink); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+    .space-menu-spacer { height:48px; }
+    .page-head { padding:22px clamp(16px,4vw,48px) 20px; color:white; background:linear-gradient(120deg,#17243b,#203d68); }
+    .page-head-inner { width:min(1400px,100%); margin:0 auto; display:flex; justify-content:space-between; align-items:flex-end; gap:18px; }
+    .eyebrow { color:#b9c9e2; font-size:10px; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
+    h1 { margin:6px 0 5px; font-size:clamp(23px,4vw,34px); line-height:1.08; letter-spacing:-.045em; }
+    .subtitle { color:#cfdaea; font-size:12px; }
+    .record-count { flex:none; padding:9px 13px; border:1px solid #ffffff35; border-radius:11px; color:#fff; background:#ffffff12; font-size:11px; font-weight:750; }
+    .toolbar { position:sticky; top:48px; z-index:5; padding:12px clamp(16px,4vw,48px); background:#ffffffed; border-bottom:1px solid var(--line); box-shadow:0 3px 12px #1527410c; backdrop-filter:blur(12px); }
+    .toolbar-inner { width:min(1400px,100%); margin:0 auto; display:flex; align-items:center; gap:9px; }
+    .search-wrap { position:relative; flex:1; min-width:140px; }
+    .search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:#8090a5; pointer-events:none; }
+    input[type="search"], select { height:38px; padding:0 11px; border:1px solid var(--line); border-radius:9px; background:#f8fafc; color:var(--ink); font:inherit; font-size:12px; outline:none; }
+    input[type="search"] { width:100%; padding-left:33px; }
+    input[type="search"]:focus, select:focus { border-color:#87a7d7; box-shadow:0 0 0 3px #2457a615; }
+    select { max-width:180px; }
+    .action-button { height:36px; padding:0 12px; border:1px solid var(--line); border-radius:9px; color:#41516a; background:#fff; font:750 11px inherit; white-space:nowrap; cursor:pointer; }
+    .action-button:hover { border-color:#b8c9e1; color:var(--blue); background:var(--blue-pale); }
+    .comparison-panel { display:none; width:min(1400px,calc(100% - 32px)); margin:0 auto 16px; padding:18px; border:1px solid var(--line); border-radius:14px; background:#fff; box-shadow:0 3px 12px #1527410b; }
+    .comparison-panel.visible { display:block; }
+    .panel-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+    .panel-head h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
+    .comparison-graph { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+    .pie-chart { position:relative; width:170px; height:170px; border-radius:50%; background:conic-gradient(#dfeaf9 0 100%); box-shadow:inset 0 0 0 1px rgba(30,41,59,.05), 0 10px 22px rgba(36,87,166,.12); display:grid; place-items:center; }
+    .pie-chart::before { content:""; position:absolute; inset:27px; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 1px rgba(36,87,166,.08); }
+    .pie-center { position:relative; z-index:1; display:grid; place-items:center; text-align:center; }
+    .pie-center strong { font-size:22px; letter-spacing:-.04em; color:var(--navy); }
+    .pie-center span { font-size:10px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
+    .legend { display:flex; flex-wrap:wrap; gap:16px; color:var(--muted); font-size:12px; }
+    .legend-item { display:flex; align-items:center; gap:8px; }
+    .legend-swatch { width:12px; height:12px; border-radius:4px; display:inline-block; }
+    .legend-swatch.selected { background:#2457a6; }
+    .legend-swatch.remaining { background:#9bb8e6; }
+    .legend-swatch.extra { background:#f4b26a; }
+    .comparison-summary { margin-top:12px; color:var(--ink); font-size:13px; line-height:1.6; }
+    .comparison-summary strong { font-size:14px; }
+    .summary { width:min(1400px,calc(100% - 32px)); margin:16px auto 12px; display:grid; grid-template-columns:repeat(4, minmax(160px, 1fr)); gap:10px; }
+    .metric { padding:13px 14px 12px; border:1px solid var(--line); border-radius:12px; background:var(--white); box-shadow:0 2px 8px #15274108; display:flex; flex-direction:column; justify-content:center; min-height:76px; }
+    .metric-label { color:var(--muted); font-size:9px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    .metric-value { margin-top:6px; color:var(--navy); font-size:clamp(18px, 2vw, 29px); font-weight:800; letter-spacing:-.04em; line-height:1.1; font-variant-numeric:tabular-nums; }
+    .metric.selected .metric-value { color:var(--blue); }
+    .table-panel { width:min(1400px,calc(100% - 32px)); margin:0 auto 30px; overflow:hidden; border:1px solid var(--line); border-radius:14px; background:#fff; box-shadow:0 3px 12px #1527410b; }
+    .result-line { padding:10px 14px; border-bottom:1px solid var(--line); color:var(--muted); font-size:11px; }
+    .table-scroll { overflow:auto; }
+    table { width:100%; border-collapse:collapse; min-width:610px; }
+    thead { position:sticky; top:62px; z-index:2; background:linear-gradient(180deg, #0f1d31 0%, #172d43 100%); box-shadow:inset 0 -1px 0 rgba(255,255,255,.08); }
+    th,td { padding:11px 13px; border-bottom:1px solid #edf0f4; text-align:left; font-size:12px; }
+    th { font-size:10px; font-weight:800; letter-spacing:.11em; text-transform:uppercase; white-space:nowrap; color:#edf3ff; background:transparent; }
+    thead th:first-child { border-top-left-radius:0; }
+    thead th:last-child { border-top-right-radius:0; }
+    td.num,th.num { text-align:right; font-variant-numeric:tabular-nums; }
+    tbody tr { cursor:pointer; transition:background .12s ease; }
+    tbody tr:hover { background:#f3f7fc; }
+    tbody tr.is-selected { background:#eaf1fb; }
+    tbody tr:last-child td { border-bottom:0; }
+    input[type="checkbox"] { width:15px; height:15px; accent-color:var(--blue); vertical-align:middle; cursor:pointer; }
+    .type-pill { display:inline-block; padding:4px 8px; border-radius:999px; color:#285e47; background:#e6f4ed; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    .type-pill.outdoor { color:#89531c; background:#fff1d9; }
+    .area-name { font-weight:700; }
+    .empty { display:none; padding:36px 16px; color:var(--muted); text-align:center; font-size:13px; }
+    .mobile-list { display:none; padding:10px; }
+    .mobile-row { display:grid; grid-template-columns:18px 1fr auto; align-items:start; gap:9px; margin-bottom:8px; padding:11px; border:1px solid var(--line); border-radius:11px; background:#fff; cursor:pointer; }
+    .mobile-row.is-selected { border-color:#b8c9e1; background:#f1f6fd; }
+    .mobile-row .type-pill { grid-column:2; justify-self:start; margin-top:7px; }
+    .mobile-area { grid-column:3; grid-row:1 / span 2; color:var(--navy); font-size:12px; font-weight:800; text-align:right; white-space:nowrap; }
+    .mobile-area small { display:block; margin-top:3px; color:var(--muted); font-size:9px; font-weight:600; }
+    .mobile-sr { color:#94a1b2; font-size:10px; font-weight:750; }
+    @media(max-width:760px) {
+      .space-menu-spacer { height:43px; }
+      .page-head { padding-top:17px; padding-bottom:16px; }
+      .toolbar-inner { flex-wrap:wrap; }
+      .search-wrap { flex-basis:100%; }
+      select { flex:1; max-width:none; }
+      .action-button { flex:1; }
+      .summary { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:7px; }
+      .metric { min-height:68px; padding:10px 11px; }
+      .metric-value { font-size:16px; }
+      .table-panel { border-radius:12px; }
+      .table-scroll { display:none; }
+      .mobile-list { display:block; }
+      .result-line { padding:9px 11px; }
+    }
+    @media(max-width:380px) {
+      .page-head-inner { align-items:flex-start; flex-direction:column; gap:9px; }
+      .record-count { padding:6px 9px; }
+      .action-button { padding:0 8px; font-size:10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="space-menu-spacer" aria-hidden="true"></div>
+  <header class="page-head">
+    <div class="page-head-inner">
+      <div><div class="eyebrow">FALH · Infrastructure data</div><h1>Flooring Area Register</h1><div class="subtitle">Search, filter, and select indoor and outdoor areas.</div></div>
+      <div class="record-count" id="record-count">12 areas</div>
+    </div>
+  </header>
+  <section class="toolbar" aria-label="Data controls">
+    <div class="toolbar-inner">
+      <label class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search area name…" aria-label="Search areas"></label>
+      <select id="type-filter" aria-label="Filter by area type"><option value="all">All types</option><option value="indoor">Indoor</option><option value="outdoor">Outdoor</option></select>
+      <select id="sort-by" aria-label="Sort areas"><option value="sr-asc">Serial number ↑</option><option value="sr-desc">Serial number ↓</option><option value="name-asc">Name A–Z</option><option value="name-desc">Name Z–A</option><option value="area-asc">Area low–high</option><option value="area-desc">Area high–low</option></select>
+      <button class="action-button" id="select-visible" type="button">Select filtered</button>
+      <button class="action-button" id="show-graph" type="button">Graph</button>
+      <button class="action-button" id="clear-selection" type="button">Clear selected</button>
+    </div>
+  </section>
+  <section class="comparison-panel" id="comparison-panel">
+    <div class="panel-head">
+      <h2>Selected vs total area</h2>
+      <button class="action-button" id="hide-graph" type="button">Hide graph</button>
+    </div>
+    <div class="comparison-graph">
+      <div class="pie-chart" id="comparison-pie" aria-label="Selected area pie chart">
+        <div class="pie-center"><strong id="pie-value">0%</strong><span>Selected</span></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch selected"></span> Selected: <strong id="selected-label">0%</strong></div>
+        <div class="legend-item"><span class="legend-swatch remaining"></span> Remaining: <strong id="remaining-label">100%</strong></div>
+        <div class="legend-item"><span class="legend-swatch extra"></span> Total view: <strong id="total-label">100%</strong></div>
+      </div>
+    </div>
+    <div class="comparison-summary" id="comparison-summary">Select one or more rows to compare the chosen area against the total available area.</div>
+  </section>
+  <section class="summary" aria-label="Area totals">
+    <div class="metric"><div class="metric-label">Total area</div><div class="metric-value" id="total-m2">0 m²</div></div>
+    <div class="metric"><div class="metric-label">Total square feet</div><div class="metric-value" id="total-ft2">0 sq ft</div></div>
+    <div class="metric selected"><div class="metric-label">Selected area</div><div class="metric-value" id="selected-m2">0 m²</div></div>
+    <div class="metric selected"><div class="metric-label">Selected square feet</div><div class="metric-value" id="selected-ft2">0 sq ft</div></div>
+  </section>
+  <main class="table-panel">
+    <div class="result-line" id="result-count" aria-live="polite"></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th><input id="select-all" type="checkbox" aria-label="Select all filtered areas"></th><th>Sr No</th><th>Area name</th><th>Type</th><th class="num">Area (m²)</th><th class="num">Area (sq ft)</th></tr></thead>
+      <tbody id="desktop-rows"></tbody>
+    </table></div>
+    <div id="mobile-rows" class="mobile-list"></div>
+    <div id="empty" class="empty">No areas match your search or filter.</div>
+  </main>
+  <script>
+    const areas = [
+      { name: "Reception Area", m2: 25, type: "indoor" },
+      { name: "Play Group Class room", m2: 25, type: "indoor" },
+      { name: "Makers Room", m2: 50, type: "indoor" },
+      { name: "Nursery Classroom", m2: 38, type: "indoor" },
+      { name: "Sr Kg Jr Kg Room", m2: 38, type: "indoor" },
+      { name: "Coordinator Room", m2: 13, type: "indoor" },
+      { name: "Staff Room", m2: 25, type: "indoor" },
+      { name: "Utility Area", m2: 19, type: "indoor" },
+      { name: "Passage", m2: 136, type: "indoor" },
+      { name: "green turf", m2: 114, type: "outdoor" },
+      { name: "open play area", m2: 89, type: "outdoor" },
+      { name: "outside boudrey", m2: 133, type: "outdoor" }
+    ];
+    const selected = new Set();
+    const sqFt = m2 => m2 * 10.7639104167;
+    const fmt = value => value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const search = document.getElementById("search");
+    const typeFilter = document.getElementById("type-filter");
+    const sortBy = document.getElementById("sort-by");
+
+    function visibleAreas() {
+      const query = search.value.trim().toLowerCase();
+      const type = typeFilter.value;
+      const rows = areas.map((area, index) => ({ ...area, index })).filter(area =>
+        (!query || area.name.toLowerCase().includes(query)) && (type === "all" || area.type === type)
+      );
+      const [key, direction] = sortBy.value.split("-");
+      rows.sort((a, b) => {
+        const difference = key === "name" ? a.name.localeCompare(b.name, undefined, { sensitivity: "base" }) : key === "area" ? a.m2 - b.m2 : a.index - b.index;
+        return direction === "desc" ? -difference : difference;
+      });
+      return rows;
+    }
+    function render() {
+      const rows = visibleAreas();
+      document.getElementById("desktop-rows").innerHTML = rows.map(area => `
+        <tr data-index="${area.index}" class="${selected.has(area.index) ? "is-selected" : ""}">
+          <td><input type="checkbox" data-index="${area.index}" ${selected.has(area.index) ? "checked" : ""} aria-label="Select ${area.name}"></td>
+          <td>${area.index + 1}</td><td class="area-name">${area.name}</td>
+          <td><span class="type-pill ${area.type === "outdoor" ? "outdoor" : ""}">${area.type}</span></td>
+          <td class="num">${fmt(area.m2)}</td><td class="num">${fmt(sqFt(area.m2))}</td>
+        </tr>`).join("");
+      document.getElementById("mobile-rows").innerHTML = rows.map(area => `
+        <article class="mobile-row ${selected.has(area.index) ? "is-selected" : ""}" data-index="${area.index}">
+          <span class="mobile-sr">${String(area.index + 1).padStart(2, "0")}</span>
+          <span class="area-name">${area.name}</span>
+          <span class="mobile-area">${fmt(area.m2)} m²<small>${fmt(sqFt(area.m2))} sq ft</small></span>
+          <span class="type-pill ${area.type === "outdoor" ? "outdoor" : ""}">${area.type}</span>
+          <input type="checkbox" data-index="${area.index}" ${selected.has(area.index) ? "checked" : ""} aria-label="Select ${area.name}">
+        </article>`).join("");
+      document.getElementById("record-count").textContent = `${areas.length} areas`;
+      document.getElementById("result-count").textContent = `Showing ${rows.length} of ${areas.length} areas`;
+      document.getElementById("empty").style.display = rows.length ? "none" : "block";
+      const total = areas.reduce((sum, area) => sum + area.m2, 0);
+      const chosen = [...selected].reduce((sum, index) => sum + areas[index].m2, 0);
+      document.getElementById("total-m2").textContent = `${fmt(total)} m²`;
+      document.getElementById("total-ft2").textContent = `${fmt(sqFt(total))} sq ft`;
+      document.getElementById("selected-m2").textContent = `${fmt(chosen)} m²`;
+      document.getElementById("selected-ft2").textContent = `${fmt(sqFt(chosen))} sq ft`;
+      const totalView = visibleAreas().reduce((sum, area) => sum + area.m2, 0);
+      const selectedView = [...selected].filter(index => visibleAreas().some(area => area.index === index)).reduce((sum, index) => sum + areas[index].m2, 0);
+      const comparisonTotal = totalView || total;
+      const comparisonSelected = selectedView || chosen;
+      const selectedPercent = comparisonTotal ? (comparisonSelected / comparisonTotal) * 100 : 0;
+      const comparisonPie = document.getElementById("comparison-pie");
+      const selectedLabel = document.getElementById("selected-label");
+      const remainingLabel = document.getElementById("remaining-label");
+      const totalLabel = document.getElementById("total-label");
+      const pieValue = document.getElementById("pie-value");
+      const comparisonSummary = document.getElementById("comparison-summary");
+      const selectedPercentText = `${fmt(selectedPercent)}%`;
+      const remainingPercentText = `${fmt(Math.max(0, 100 - selectedPercent))}%`;
+      const gradient = selected.size
+        ? `conic-gradient(#2457a6 0 ${selectedPercent}%, #9bb8e6 ${selectedPercent}% 100%)`
+        : "conic-gradient(#dfeaf9 0 100%)";
+      comparisonPie.style.background = gradient;
+      pieValue.textContent = selected.size ? selectedPercentText : "0%";
+      selectedLabel.textContent = selectedPercentText;
+      remainingLabel.textContent = remainingPercentText;
+      totalLabel.textContent = "100%";
+      if (selected.size) {
+        comparisonSummary.innerHTML = `<strong>${fmt(comparisonSelected)} m²</strong> selected out of <strong>${fmt(comparisonTotal)} m²</strong> in the current view, which is <strong>${selectedPercentText}</strong> of the total.`;
+      } else {
+        comparisonSummary.textContent = "Select one or more rows to compare the chosen area against the total available area.";
+      }
+      const allSelected = rows.length > 0 && rows.every(area => selected.has(area.index));
+      const selectAll = document.getElementById("select-all");
+      selectAll.checked = allSelected;
+      selectAll.indeterminate = !allSelected && rows.some(area => selected.has(area.index));
+    }
+    function attachSelection(container) {
+      container.addEventListener("click", event => {
+        const row = event.target.closest("[data-index]");
+        if (!row || event.target.matches("input[type=checkbox]")) return;
+        const index = Number(row.dataset.index);
+        selected.has(index) ? selected.delete(index) : selected.add(index);
+        render();
+      });
+      container.addEventListener("change", event => {
+        if (!event.target.matches("input[type=checkbox][data-index]")) return;
+        const index = Number(event.target.dataset.index);
+        event.target.checked ? selected.add(index) : selected.delete(index);
+        render();
+      });
+    }
+    attachSelection(document.getElementById("desktop-rows"));
+    attachSelection(document.getElementById("mobile-rows"));
+    search.addEventListener("input", render);
+    typeFilter.addEventListener("change", render);
+    sortBy.addEventListener("change", render);
+    document.getElementById("select-visible").addEventListener("click", () => { visibleAreas().forEach(area => selected.add(area.index)); render(); });
+    document.getElementById("clear-selection").addEventListener("click", () => { selected.clear(); render(); });
+    document.getElementById("select-all").addEventListener("change", event => { visibleAreas().forEach(area => event.target.checked ? selected.add(area.index) : selected.delete(area.index)); render(); });
+    document.getElementById("show-graph").addEventListener("click", () => {
+      const panel = document.getElementById("comparison-panel");
+      panel.classList.add("visible");
+      render();
+    });
+    document.getElementById("hide-graph").addEventListener("click", () => {
+      document.getElementById("comparison-panel").classList.remove("visible");
+    });
+    render();
+  </script>
+  <script src="../../../school-space-nav.js" data-school="FALH"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flooring Area Table</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;font-synthesis:none}*{box-sizing:border-box}body{margin:0;padding:52px 12px 12px}.wrap{max-width:780px;margin:0 auto;background:#fff;border:1px solid #444;overflow:hidden}.head{padding:3px 8px;text-align:center;border-bottom:1px solid #444}.head h1{font-size:17px;font-weight:400;margin:0}.head p{display:none}.controls{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:6px 8px;background:#fff;border-bottom:1px solid #444}.controls input,.controls select,.controls button{font:12px Arial,Helvetica,sans-serif;border:1px solid #888;border-radius:0;background:white;padding:4px 6px;color:#111}.controls input{min-width:130px;flex:1}#filterTools:not([hidden]){display:flex;gap:5px;flex:1;min-width:220px}.controls button{cursor:pointer}.controls button:hover{background:#eee}.count{margin-left:auto;color:#333;font-size:11px}.table-scroll{overflow:auto}table{width:100%;border-collapse:collapse;min-width:570px}th,td{padding:4px 7px;border:1px solid #555;text-align:left;font-size:13px;height:23px}th{font-size:12px;font-weight:400;background:#fff;position:sticky;top:0;z-index:1}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.checkcol{width:28px;text-align:center;padding:2px}.column-filters th{padding:2px 4px;text-align:left}.column-filters th.num{text-align:right}.col-filter-toggle{font:11px Arial,sans-serif;padding:2px 5px;border:1px solid #7a8791;background:#f1f6fa;color:#123a55;cursor:pointer}.col-filter{display:block;max-width:105px;font:11px Arial,sans-serif;padding:2px;border:1px solid #888;background:#fff}.col-filter[hidden]{display:none}input[type=checkbox]{width:14px;height:14px;accent-color:#1769aa;vertical-align:middle;cursor:pointer}.rowname{font-weight:400}.tag{display:inline-block;border-radius:0;padding:1px 5px;font-size:11px;background:transparent;color:#333}tbody tr{cursor:pointer}tbody tr[data-type="indoor"]{background:#d9efff}tbody tr[data-type="outdoor"]{background:#dff1d3}tbody tr[data-type="outdoor"]:nth-child(even){background:#fff2b8}tbody tr:hover{filter:brightness(.94)}tbody tr.is-selected{background:#1678b8!important;color:#fff}tbody tr.is-selected .tag{color:#fff}tbody tr.is-selected input[type=checkbox]{accent-color:#fff}.tfoot{display:flex;justify-content:flex-end;gap:16px;flex-wrap:wrap;padding:6px 8px;background:#fff;border-top:1px solid #555;font-variant-numeric:tabular-nums}.total{font-size:11px;color:#333;text-align:right}.total strong{display:block;color:#111;font-size:14px;font-weight:400;margin-top:1px}.selected{color:#145b89}.empty{padding:15px;text-align:center;color:#444;display:none}@media(max-width:600px){body{padding:48px 5px 5px}.controls{padding:5px}#filterTools:not([hidden]){width:100%;min-width:0;flex:1 1 100%;flex-wrap:wrap}#filterTools input,#filterTools select{flex:1 1 120px;min-width:0}.controls button{min-height:36px}.tfoot{justify-content:space-between;gap:8px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head"><h1>Flooring Area</h1><p>Search or filter rows, then tick any combination to total selected areas.</p></header>
+  <section class="controls" aria-label="Table controls">
+    <button id="filterToggle" type="button" aria-expanded="false">Filter ▾</button>
+    <div id="filterTools" hidden><input id="search" type="search" placeholder="Search area name…" aria-label="Search area name">
+    <select id="typeFilter" aria-label="Filter by type"><option value="all">All types</option><option value="indoor">Indoor</option><option value="outdoor">Outdoor</option></select></div>
+    <select id="sortBy" aria-label="Sort rows"><option value="sr-asc">Sr No ↑</option><option value="sr-desc">Sr No ↓</option><option value="name-asc">Name A–Z</option><option value="name-desc">Name Z–A</option><option value="area-asc">Area low–high</option><option value="area-desc">Area high–low</option></select>
+    <button id="selectVisible" type="button">Select filtered</button>
+    <button id="clearSelection" type="button">Clear selection</button>
+    <span class="count" id="count"></span>
+  </section>
+  <div class="table-scroll"><table>
+    <thead><tr><th class="checkcol"><input id="selectAll" type="checkbox" aria-label="Select all filtered rows"></th><th>Sr No</th><th>Name</th><th>Type</th><th class="num">Area (Sq m)</th><th class="num">Area (Sq ft)</th></tr>
+    <tr class="column-filters"><th></th><th><button class="col-filter-toggle" data-col="sr" type="button">Filter ▾</button><select class="col-filter" data-col="sr" aria-label="Filter by serial number" hidden></select></th><th><button class="col-filter-toggle" data-col="name" type="button">Filter ▾</button><select class="col-filter" data-col="name" aria-label="Filter by name" hidden></select></th><th><button class="col-filter-toggle" data-col="type" type="button">Filter ▾</button><select class="col-filter" data-col="type" aria-label="Filter by type" hidden></select></th><th class="num"><button class="col-filter-toggle" data-col="area" type="button">Filter ▾</button><select class="col-filter" data-col="area" aria-label="Filter by area in square metres" hidden></select></th><th class="num"><button class="col-filter-toggle" data-col="sqft" type="button">Filter ▾</button><select class="col-filter" data-col="sqft" aria-label="Filter by area in square feet" hidden></select></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table><div id="empty" class="empty">No areas match your filter.</div></div>
+  <footer class="tfoot"><div class="total">Total area<strong id="totalM2">0.00 m²</strong></div><div class="total">Total in square feet<strong id="totalFt2">0.00 sq ft</strong></div><div class="total selected">Selected area<strong id="selectedM2">0.00 m²</strong></div><div class="total selected">Selected in square feet<strong id="selectedFt2">0.00 sq ft</strong></div></footer>
+</main>
+<script>
+// Areas and names transcribed from the supplied Flooring Area screenshot.
+const areas=[
+  {name:'Reception Area',m2:25,type:'indoor'},
+  {name:'Play Group Class room',m2:25,type:'indoor'},
+  {name:'Makers Room',m2:50,type:'indoor'},
+  {name:'Nursery Classroom',m2:38,type:'indoor'},
+  {name:'Sr Kg Jr Kg Room',m2:38,type:'indoor'},
+  {name:'Coordinator Room',m2:13,type:'indoor'},
+  {name:'Staff Room',m2:25,type:'indoor'},
+  {name:'Utility Area',m2:19,type:'indoor'},
+  {name:'Passage',m2:136,type:'indoor'},
+  {name:'green turf',m2:114,type:'outdoor'},
+  {name:'open play area',m2:89,type:'outdoor'},
+  {name:'outside boudrey',m2:133,type:'outdoor'}
+];
+const sqFt=m=>m*10.7639104167, selected=new Set();
+const body=document.querySelector('#rows'), search=document.querySelector('#search'), typeFilter=document.querySelector('#typeFilter'), sortBy=document.querySelector('#sortBy');
+const fmt=n=>n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const filterValue={sr:'',name:'',type:'',area:'',sqft:''};
+const colValue=(a,col)=>col==='sr'?String(a.i+1):col==='name'?a.name:col==='type'?a.type:col==='area'?fmt(a.m2):fmt(sqFt(a.m2));
+document.querySelectorAll('.col-filter').forEach(sel=>{const col=sel.dataset.col,vals=[...new Set(areas.map((a,i)=>colValue({...a,i},col)))];sel.innerHTML='<option value="">All</option>'+vals.map(v=>`<option value="${v}">${v}</option>`).join('');sel.addEventListener('change',()=>{filterValue[col]=sel.value;render();});});
+document.querySelectorAll('.col-filter-toggle').forEach(btn=>btn.addEventListener('click',()=>{const sel=document.querySelector(`.col-filter[data-col="${btn.dataset.col}"]`);sel.hidden=!sel.hidden;btn.textContent=sel.hidden?'Filter ▾':'Filter ▴';}));
+function visibleItems(){const q=search.value.trim().toLowerCase(),t=typeFilter.value,items=areas.map((a,i)=>({...a,i})).filter(a=>(!q||a.name.toLowerCase().includes(q))&&(t==='all'||a.type===t)&&Object.entries(filterValue).every(([col,val])=>!val||colValue(a,col)===val));const [key,dir]=sortBy.value.split('-');items.sort((a,b)=>{let d=key==='name'?a.name.localeCompare(b.name,undefined,{sensitivity:'base'}):key==='area'?a.m2-b.m2:a.i-b.i;return dir==='desc'?-d:d;});return items;}
+function render(){const shown=visibleItems();body.innerHTML=shown.map(a=>`<tr data-index="${a.i}" data-type="${a.type}" class="${selected.has(a.i)?'is-selected':''}" aria-selected="${selected.has(a.i)}"><td class="checkcol"><input type="checkbox" data-index="${a.i}" ${selected.has(a.i)?'checked':''} aria-label="Select ${a.name}"></td><td>${a.i+1}</td><td class="rowname">${a.name}</td><td><span class="tag">${a.type==='indoor'?'Indoor':'Outdoor'}</span></td><td class="num">${fmt(a.m2)}</td><td class="num">${fmt(sqFt(a.m2))}</td></tr>`).join('');
+ document.querySelector('#empty').style.display=shown.length?'none':'block';document.querySelector('#count').textContent=`Showing ${shown.length} of ${areas.length} areas`;
+ const total=areas.reduce((s,a)=>s+a.m2,0),sel=[...selected].reduce((s,i)=>s+areas[i].m2,0);document.querySelector('#totalM2').textContent=`${fmt(total)} m²`;document.querySelector('#totalFt2').textContent=`${fmt(sqFt(total))} sq ft`;document.querySelector('#selectedM2').textContent=`${fmt(sel)} m²`;document.querySelector('#selectedFt2').textContent=`${fmt(sqFt(sel))} sq ft`;
+ const all=shown.length>0&&shown.every(a=>selected.has(a.i));document.querySelector('#selectAll').checked=all;document.querySelector('#selectAll').indeterminate=!all&&shown.some(a=>selected.has(a.i));
+}
+body.addEventListener('click',e=>{if(e.target.closest('input[data-index]'))return;const row=e.target.closest('tr[data-index]');if(!row)return;const i=Number(row.dataset.index);selected.has(i)?selected.delete(i):selected.add(i);render();});
+body.addEventListener('change',e=>{if(e.target.matches('input[data-index]')){const i=Number(e.target.dataset.index);e.target.checked?selected.add(i):selected.delete(i);render();}});
+document.querySelector('#filterToggle').addEventListener('click',e=>{const tools=document.querySelector('#filterTools');tools.hidden=!tools.hidden;e.currentTarget.setAttribute('aria-expanded',String(!tools.hidden));e.currentTarget.textContent=tools.hidden?'Filter ▾':'Filter ▴';});
+search.addEventListener('input',render);typeFilter.addEventListener('change',render);sortBy.addEventListener('change',render);
+document.querySelector('#selectAll').addEventListener('change',e=>{visibleItems().forEach(a=>e.target.checked?selected.add(a.i):selected.delete(a.i));render();});
+document.querySelector('#selectVisible').addEventListener('click',()=>{visibleItems().forEach(a=>selected.add(a.i));render();});
+document.querySelector('#clearSelection').addEventListener('click',()=>{selected.clear();render();});
+render();
+</script>
+<script src="../../../school-space-nav.js" data-school="FALH"></script></body>
+</html>

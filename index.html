@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f2">
+  <title>FS INFRA</title>
+  <style>
+    :root {
+      --ink: #172d29;
+      --muted: #6d7b75;
+      --green: #2457a6;
+      --green-dark: #173b76;
+      --lime: #f8d9d6;
+      --paper: #f5f6f2;
+      --line: #e3e8e1;
+      --white: #fff;
+      --shadow: 0 18px 55px rgba(27, 53, 43, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
+    header { position: sticky; top: 0; z-index: 20; padding: 13px 0; background: rgba(245, 246, 242, .94); border-bottom: 1px solid rgba(227, 232, 225, .8); backdrop-filter: blur(14px); }
+    .topbar { display: flex; justify-content: space-between; align-items: center; }
+    .brand { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; font-weight: 800; letter-spacing: -.04em; font-size: 20px; }
+    .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; color: #fff; background: var(--green); border-radius: 12px; font-size: 14px; letter-spacing: -.05em; }
+    .header-note { color: var(--muted); font-size: 13px; }
+    .header-home { border: 1px solid var(--line); border-radius: 999px; padding: 8px 13px; color: var(--green-dark); background: #fff; font-size: 12px; font-weight: 800; white-space: nowrap; }
+    .header-home:hover { border-color: #e5aaa4; color: #a32b2b; background: #fff6f5; }
+    main { padding: 22px 0 42px; }
+    .hero { display: grid; grid-template-columns: 1.2fr .8fr; gap: 30px; align-items: end; margin-bottom: 42px; }
+    .eyebrow { color: var(--green); text-transform: uppercase; letter-spacing: .16em; font-size: 11px; font-weight: 800; }
+    h1 { font-size: clamp(38px, 6vw, 68px); letter-spacing: -.065em; line-height: .98; margin: 15px 0 16px; max-width: 680px; }
+    .intro { color: var(--muted); line-height: 1.65; font-size: 16px; margin: 0; max-width: 560px; }
+    .summary { display: flex; align-items: center; gap: 17px; padding: 20px 22px; background: var(--white); border: 1px solid var(--line); border-radius: 19px; box-shadow: var(--shadow); }
+    .summary-number { color: var(--green); font-weight: 800; font-size: 52px; line-height: .9; letter-spacing: -.07em; }
+    .summary-label { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .summary-label strong { display: block; color: var(--ink); font-size: 15px; }
+    .section-heading { display: flex; justify-content: space-between; align-items: end; margin-bottom: 17px; }
+    h2 { margin: 0; font-size: 21px; letter-spacing: -.04em; }
+    .section-heading span { color: var(--muted); font-size: 13px; }
+    .school-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; }
+    .school-card { position: relative; min-height: 265px; overflow: hidden; border-radius: 20px; background: linear-gradient(150deg, #dce5ef 0%, #f9fafb 55%, #dce4ee 100%); border: 1px solid #dce2e9; box-shadow: 0 12px 30px rgba(23, 45, 70, .1); display: flex; flex-direction: column; justify-content: flex-end; transition: transform .2s ease, box-shadow .2s ease; }
+    .school-card:hover { transform: translateY(-4px); box-shadow: 0 20px 44px rgba(23, 45, 70, .18); }
+    .school-card.has-content { border-color: #b7c8e3; box-shadow: 0 14px 34px rgba(23, 59, 118, .15); }
+    .school-card.no-content .open-card { opacity: .58; background: #dce3ec; color: #758198; }
+    .school-card.no-content .open-card:hover { opacity: .82; background: #d0d9e5; color: #52627a; }
+    .card-art { position: absolute; inset: 0 0 105px; display: grid; place-items: center; padding: 15px; background: radial-gradient(ellipse at 50% 43%, #fff 0%, #f8fafc 42%, #e3e9f0 100%); }
+    .school-logo { display: block; width: 92%; height: 125px; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(24, 44, 68, .1)); }
+    .school-info { position: relative; min-height: 105px; padding: 12px 14px 11px; color: #fff; background: linear-gradient(155deg, rgba(26, 55, 99, .94), #102b55 90%); }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 7px; min-height: 34px; }
+    .school-identity { min-width: 0; }
+    .school-code { font-size: clamp(16px, 1.7vw, 21px); font-weight: 800; letter-spacing: -.045em; line-height: 1.1; overflow-wrap: anywhere; }
+    .school-name { color: #d0d9e7; font-size: 11px; margin-top: 4px; }
+    .school-type { flex: none; color: #233e68; background: #fff; border-radius: 999px; padding: 6px 9px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+    .open-card { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 7px; padding: 8px 12px; border: 0; border-radius: 999px; background: #fff; color: var(--green-dark); text-align: left; font-size: 11px; font-weight: 800; transition: background .18s ease, color .18s ease; }
+    .open-card:hover { background: #f8d9d6; color: #a32b2b; }
+    .arrow { font-size: 18px; }
+    .detail-head { display: flex; align-items: center; gap: 18px; margin-bottom: 30px; }
+    .back { border: 1px solid var(--line); border-radius: 11px; background: var(--white); color: var(--ink); padding: 10px 13px; font-weight: 700; }
+    .back:hover { border-color: #b8d3c3; }
+    .detail-logo { width: 76px; height: 58px; flex: none; padding: 5px; border: 1px solid var(--line); border-radius: 12px; background: #fff; object-fit: contain; }
+    .detail-title { margin: 0; font-size: clamp(30px, 4vw, 46px); letter-spacing: -.06em; }
+    .detail-subtitle { color: var(--muted); margin: 5px 0 0; font-size: 14px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .detail-card { min-height: 108px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--white); box-shadow: 0 4px 14px rgba(27, 53, 43, .035); display: flex; flex-direction: column; }
+    .detail-card.clickable { cursor: pointer; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+    .detail-card.clickable:hover { transform: translateY(-2px); border-color: #b7c8e3; box-shadow: 0 9px 22px rgba(23, 59, 118, .12); }
+    .detail-card.clickable:focus-visible { outline: 3px solid #7da4df; outline-offset: 3px; }
+    .detail-icon { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 9px; background: #edf2fa; color: var(--green); font-size: 15px; }
+    .detail-card h3 { margin: 7px 0 0; font-size: 14px; letter-spacing: -.03em; }
+    .detail-card p { display: none; }
+    .coming-soon { margin-top: auto; padding-top: 8px; color: #89958e; text-transform: uppercase; letter-spacing: .05em; font-size: 8px; font-weight: 800; }
+    .file-link { display: inline-flex; align-items: center; gap: 4px; width: fit-content; max-width: 100%; margin-top: auto; padding-top: 8px; color: var(--green); text-decoration: none; font-size: 10px; font-weight: 800; overflow-wrap: anywhere; }
+    .file-link:hover { color: #a32b2b; text-decoration: underline; }
+    .empty-note { margin-top: 21px; padding: 17px 19px; background: #edf2ea; border-radius: 13px; color: #52635a; font-size: 13px; line-height: 1.55; }
+    footer { padding: 20px 0 30px; color: #89958e; font-size: 11px; border-top: 1px solid var(--line); }
+    [hidden] { display: none !important; }
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; gap: 23px; }
+      .summary { max-width: 260px; }
+      .school-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 900px) { .detail-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 650px) { .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 650px) { .school-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 520px) {
+      .shell { width: min(100% - 30px, 1160px); }
+      header { padding: 17px 0; }
+      .header-note { display: none; }
+      main { padding-top: 18px; }
+      .school-grid { grid-template-columns: 1fr; }
+      .school-card { min-height: 265px; }
+      .section-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+      .detail-head { align-items: flex-start; }
+      .detail-logo { width: 54px; height: 46px; padding: 3px; border-radius: 9px; }
+      .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .detail-card { min-height: 100px; padding: 10px; border-radius: 12px; }
+      .detail-icon { width: 27px; height: 27px; border-radius: 8px; font-size: 14px; }
+      .detail-card h3 { margin: 6px 0 0; font-size: 13px; }
+      .coming-soon { padding-top: 7px; font-size: 7px; letter-spacing: .04em; }
+      .file-link { padding-top: 7px; font-size: 9px; line-height: 1.2; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell topbar">
+      <a class="brand" href="#home" aria-label="FS INFRA home">
+        <span class="brand-mark">FS</span><span>FS INFRA</span>
+      </a>
+      <div style="display:flex;align-items:center;gap:18px"><span class="header-note">Infrastructure information · School network</span><button class="header-home" id="header-home" type="button">← All locations</button></div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="home-view">
+      <div class="section-heading">
+        <h2>All locations</h2>
+        <span>7 locations · Select a campus</span>
+      </div>
+      <div class="school-grid" id="school-grid"></div>
+    </section>
+
+    <section id="school-view" hidden>
+      <div class="detail-head">
+        <img class="detail-logo" id="school-detail-logo" alt="School logo">
+        <div>
+          <div class="eyebrow" id="school-type-label"></div>
+          <h1 class="detail-title" id="school-title"></h1>
+          <p class="detail-subtitle">Infrastructure information</p>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <article class="detail-card" data-section="Layout"><span class="detail-icon" aria-hidden="true">⌖</span><h3>Layout</h3><p>Floor plans, site plans, and campus layout information will be added here.</p><span class="coming-soon">Information to be added</span></article>
+        <article class="detail-card" data-section="3D"><span class="detail-icon" aria-hidden="true">◇</span><h3>3D</h3><p>Three-dimensional views and models for this campus will be added here.</p><span class="coming-soon">Information to be added</span></article>
+        <article class="detail-card" data-section="360"><span class="detail-icon" aria-hidden="true">◎</span><h3>360</h3><p>Open the FALH 360-degree view.</p><span class="coming-soon">Information to be added</span></article>
+        <article class="detail-card" data-section="CAD"><span class="detail-icon" aria-hidden="true">▱</span><h3>CAD</h3><p>Computer-aided design files and the campus CAD viewer will be available here.</p><span class="coming-soon">Information to be added</span></article>
+        <article class="detail-card" data-section="Data"><span class="detail-icon" aria-hidden="true">▤</span><h3>Data</h3><p>Infrastructure registers and related spreadsheet data will be added here.</p><span class="coming-soon">Information to be added</span></article>
+        <article class="detail-card" data-section="Reference Photos"><span class="detail-icon" aria-hidden="true">▧</span><h3>Reference Photos</h3><p>Reference images and site photographs for this campus will be added here.</p><span class="coming-soon">Information to be added</span></article>
+      </div>
+      <div class="empty-note">This page is ready for your school information. Share the data, files, or photos when you’re ready, and they can be added to the relevant section.</div>
+    </section>
+  </main>
+
+  <footer><div class="shell">FS INFRA · Infrastructure directory</div></footer>
+
+  <script>
+    const schools = [
+      { code: "FSK", name: "FSK", type: "School", logo: "school-data/FSK/FSK LOGO.webp" },
+      { code: "FSM", name: "FSM", type: "School", logo: "school-data/FSM/FSM LOGO.webp" },
+      { code: "FWGS", name: "FWGS", type: "School", logo: "school-data/FWGS/FWGS LOGO.webp" },
+      { code: "FALH", name: "FALH", type: "School", logo: "school-data/FALH/FALH LOGO.webp" },
+      { code: "FSVAPI", name: "FSVAPI", type: "School", logo: "school-data/FSVAPI/FSVAPI LOGO.webp" },
+      { code: "FS Pre School Vesu", name: "Vesu", type: "Preschool", logo: "school-data/FS%20Pre%20School%20Vesu/FS%20Pre%20School%20Adajan%20LOGO.webp" },
+      { code: "FS Pre School Adajan", name: "Adajan", type: "Preschool", logo: "school-data/FS%20Pre%20School%20Adajan/FS%20Pre%20School%20Adajan%20LOGO.webp" }
+    ];
+
+    const schoolFiles = {
+      FSK: {
+        "CAD": { path: "school-data/FSK/CAD/FSK_KEYPLAN_canvas.html", label: "Open FSK CAD viewer" },
+        "Data": { path: "school-data/FSK/Data/data.html", label: "Open FSK data" }
+      },
+      FALH: {
+        "Layout": { path: "school-data/FALH/Layout/SVG%20CRATE%20-viewer.html", label: "Open Layout" },
+        "3D": { path: "school-data/FALH/3D/index.html", label: "Open 3D" },
+        "360": { path: "https://vinaysailor-dev.github.io/FALH/", label: "Open FALH 360" },
+        "CAD": { path: "school-data/FALH/CAD/falh%20cad.html", label: "Open CAD" },
+        "Data": { path: "school-data/FALH/Data/data.html", label: "Open Data" },
+        "Reference Photos": { path: "https://photos.app.goo.gl/cawU1VZJji6W4Gs98", label: "Open photo reference" }
+      }
+    };
+
+    const grid = document.getElementById("school-grid");
+    const homeView = document.getElementById("home-view");
+    const schoolView = document.getElementById("school-view");
+
+    schools.forEach((school, index) => {
+      const card = document.createElement("article");
+      card.className = "school-card";
+      card.classList.add(Object.keys(schoolFiles[school.code] || {}).length ? "has-content" : "no-content");
+      card.innerHTML = `
+        <div class="card-art"><img class="school-logo" src="${school.logo}" alt="${school.name} logo"></div>
+        <div class="school-info">
+          <div class="card-top">
+            <div class="school-identity"><div class="school-code">${school.code}</div>${school.code !== school.name ? `<div class="school-name">${school.name}</div>` : ""}</div>
+            <span class="school-type">${school.type}</span>
+          </div>
+          <button class="open-card" type="button" data-school="${index}"><span>Open campus</span><span class="arrow" aria-hidden="true">↗</span></button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    function showSchool(index) {
+      const school = schools[index];
+      if (!school) return showHome();
+      document.getElementById("school-title").textContent = school.code;
+      document.getElementById("school-type-label").textContent = school.type;
+      const detailLogo = document.getElementById("school-detail-logo");
+      detailLogo.src = school.logo;
+      detailLogo.alt = `${school.name} logo`;
+      document.querySelectorAll(".detail-card[data-section]").forEach(card => {
+        const oldLink = card.querySelector(".file-link");
+        if (oldLink) oldLink.remove();
+        const note = card.querySelector(".coming-soon");
+        const file = schoolFiles[school.code]?.[card.dataset.section];
+        if (file) {
+          card.classList.add("clickable");
+          card.dataset.href = file.path;
+          card.tabIndex = 0;
+          card.setAttribute("role", "link");
+          card.setAttribute("aria-label", file.label);
+          if (note) note.remove();
+          const link = document.createElement("a");
+          link.className = "file-link";
+          link.href = file.path;
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = file.label + " ↗";
+          card.appendChild(link);
+        } else if (!note) {
+          card.classList.remove("clickable");
+          delete card.dataset.href;
+          card.removeAttribute("tabindex");
+          card.removeAttribute("role");
+          card.removeAttribute("aria-label");
+          const placeholder = document.createElement("span");
+          placeholder.className = "coming-soon";
+          placeholder.textContent = "Information to be added";
+          card.appendChild(placeholder);
+        }
+      });
+      homeView.hidden = true;
+      schoolView.hidden = false;
+      history.replaceState(null, "", `#${encodeURIComponent(school.code.toLowerCase().replaceAll(" ", "-"))}`);
+      window.scrollTo(0, 0);
+    }
+
+    function showHome() {
+      schoolView.hidden = true;
+      homeView.hidden = false;
+      history.replaceState(null, "", "#home");
+      window.scrollTo(0, 0);
+    }
+
+    grid.addEventListener("click", event => {
+      const button = event.target.closest("button[data-school]");
+      if (button) showSchool(Number(button.dataset.school));
+    });
+    document.querySelector(".detail-grid").addEventListener("click", event => {
+      const card = event.target.closest(".detail-card.clickable");
+      if (!card || event.target.closest("a")) return;
+      window.open(card.dataset.href, "_blank", "noopener");
+    });
+    document.querySelector(".detail-grid").addEventListener("keydown", event => {
+      const card = event.target.closest(".detail-card.clickable");
+      if (!card || event.target.closest("a") || (event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      window.open(card.dataset.href, "_blank", "noopener");
+    });
+    document.getElementById("header-home").addEventListener("click", showHome);
+    window.addEventListener("hashchange", () => {
+      if (location.hash === "#home" || !location.hash) return showHome();
+      const slug = decodeURIComponent(location.hash.slice(1));
+      const index = schools.findIndex(school => school.code.toLowerCase().replaceAll(" ", "-") === slug);
+      if (index >= 0) showSchool(index);
+    });
+
+    if (location.hash && location.hash !== "#home") {
+      const slug = decodeURIComponent(location.hash.slice(1));
+      const index = schools.findIndex(school => school.code.toLowerCase().replaceAll(" ", "-") === slug);
+      if (index >= 0) showSchool(index);
+    }
+  </script>
+</body>
+</html>
